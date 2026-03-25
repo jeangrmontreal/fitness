@@ -1,163 +1,110 @@
 import streamlit as st
-import time
 from datetime import datetime
 import pandas as pd
 
-st.set_page_config(page_title="APOLLO FITNESS", page_icon="💪", layout="centered")
+st.set_page_config(page_title="APOLLO PRO", page_icon="💪", layout="centered")
 
-# 🎨 ESTILO
-st.markdown("""
-<style>
-.block-container {
-    padding-top: 1rem;
-}
-h1, h2, h3 {
-    color: #ffffff;
-}
-</style>
-""", unsafe_allow_html=True)
+st.title("🚀 APOLLO PRO")
 
-st.title("🚀 APOLLO FITNESS")
-
-# 👤 LOGIN
-if "usuario" not in st.session_state:
-    usuario = st.text_input("👤 Tu nombre")
+# LOGIN
+if "user" not in st.session_state:
+    name = st.text_input("👤 Nombre")
     if st.button("Entrar"):
-        st.session_state.usuario = usuario
+        st.session_state.user = name
         st.rerun()
     st.stop()
 
-st.sidebar.write(f"👤 {st.session_state.usuario}")
+st.sidebar.write(f"👤 {st.session_state.user}")
 
-# 📱 MENÚ LATERAL
-menu = st.sidebar.radio(
-    "Menú",
-    ["🏋️ Entrenamiento", "📊 Progreso", "📅 Historial", "🍽️ Dieta"]
-)
+# ESTADOS
+if "workouts" not in st.session_state:
+    st.session_state.workouts = []
 
-# DATOS
-rutinas = {
-    "Día 1": [("Press inclinado Smith", "pesado"), ("Press convergente", "hipertrofia"), ("Aperturas", "aislamiento"), ("Laterales", "aislamiento"), ("Fondos", "pesado")],
-    "Día 2": [("Remo barra", "pesado"), ("Dominadas", "pesado"), ("Remo mancuerna", "hipertrofia"), ("Remo inclinado", "hipertrofia"), ("Pájaros", "aislamiento"), ("Curl predicador", "hipertrofia"), ("Curl martillo", "aislamiento")],
-    "Día 3": [("Sentadilla", "pesado"), ("Prensa", "hipertrofia"), ("Curl femoral", "aislamiento"), ("Extensión", "aislamiento"), ("Peso muerto rumano", "hipertrofia"), ("Gemelos", "aislamiento")],
-    "Día 4": [("Press inclinado", "pesado"), ("Aperturas", "aislamiento"), ("Press máquina", "hipertrofia"), ("Press militar", "pesado"), ("Laterales", "aislamiento"), ("Skull crushers", "hipertrofia"), ("Press cerrado", "pesado")]
-}
+if "weights" not in st.session_state:
+    st.session_state.weights = []
 
-descansos = {"pesado": 90, "hipertrofia": 60, "aislamiento": 45}
+if "diet" not in st.session_state:
+    st.session_state.diet = {"C1": False, "C2": False, "C3": False}
 
-if "historial" not in st.session_state:
-    st.session_state.historial = []
+# MENU
+menu = st.sidebar.radio("Menú", ["🏋️ Entreno", "🍽️ Dieta", "⚖️ Peso", "📊 Progreso"])
 
-# 🏋️ ENTRENAMIENTO
-if menu == "🏋️ Entrenamiento":
+# ENTRENAMIENTO
+if menu == "🏋️ Entreno":
 
     st.header("🏋️ Entrenamiento")
 
-    dia = st.selectbox("Selecciona tu día", ["Día 1", "Día 2", "Día 3", "Día 4"])
-    rutina = rutinas[dia]
+    ejercicios = ["Press inclinado", "Sentadilla", "Dominadas", "Curl bíceps"]
 
     completados = 0
-    pesos_registro = []
 
-    for ejercicio, tipo in rutina:
-        with st.container():
-            st.subheader(ejercicio)
+    for ej in ejercicios:
+        if st.checkbox(ej):
+            completados += 1
 
-            peso = st.number_input(f"Peso (kg)", min_value=0.0, step=2.5, key=ejercicio+"_peso")
-            hecho = st.checkbox("Completar", key=ejercicio+"_check")
+    st.progress(completados / len(ejercicios))
 
-            if hecho:
-                completados += 1
-                pesos_registro.append({"ejercicio": ejercicio, "peso": peso})
+    if completados == len(ejercicios):
+        if st.button("Guardar"):
+            st.session_state.workouts.append(datetime.now().strftime("%Y-%m-%d"))
+            st.success("Entreno guardado")
 
-                if st.button("Descanso", key=ejercicio+"_btn"):
-                    for i in range(descansos[tipo], 0, -1):
-                        st.write(f"{i}s")
-                        time.sleep(1)
-
-            st.divider()
-
-    st.progress(completados / len(rutina))
-
-    if completados == len(rutina):
-        if st.button("💾 Guardar entrenamiento"):
-            fecha = datetime.now().strftime("%Y-%m-%d")
-
-            for item in pesos_registro:
-                st.session_state.historial.append({
-                    "fecha": fecha,
-                    "ejercicio": item["ejercicio"],
-                    "peso": item["peso"]
-                })
-
-            st.success("Entrenamiento guardado 🔥")
-
-# 📊 PROGRESO
-elif menu == "📊 Progreso":
-
-    st.header("📊 Progreso")
-
-    if st.session_state.historial:
-        df = pd.DataFrame(st.session_state.historial)
-
-        ejercicio = st.selectbox("Ejercicio", df["ejercicio"].unique())
-        df_f = df[df["ejercicio"] == ejercicio]
-
-        st.line_chart(df_f.set_index("fecha")["peso"])
-    else:
-        st.info("Aún no hay datos")
-
-# 📅 HISTORIAL
-elif menu == "📅 Historial":
-
-    st.header("📅 Historial")
-
-    if st.session_state.historial:
-        st.dataframe(pd.DataFrame(st.session_state.historial))
-    else:
-        st.info("No hay entrenamientos guardados")
-
-# 🍽️ DIETA
+# DIETA
 elif menu == "🍽️ Dieta":
 
     st.header("🍽️ Dieta")
 
-    comida = st.selectbox("Comida", ["Comida 1", "Comida 2", "Comida 3"])
+    comidas = {
+        "C1": "500 kcal - Desayuno completo",
+        "C2": "850 kcal - Comida fuerte",
+        "C3": "800 kcal - Cena"
+    }
 
-    if comida == "Comida 1":
-        opciones = [
-            "Tostada integral + jamón + tomate + aceite + fruta",
-            "Tostada integral + huevos + guacamole + fruta",
-            "Tortitas avena + chocolate + fresas",
-            "Leche + corn flakes + cacao + fruta"
-        ]
-        kcal = "500 kcal"
+    total = 0
 
-    elif comida == "Comida 2":
-        opciones = [
-            "Ensalada patata + atún + huevo",
-            "Arroz + pollo + champiñones",
-            "Espaguetis + carne + tomate",
-            "Macarrones + salmón + verduras"
-        ]
-        kcal = "850 kcal"
+    for key, val in comidas.items():
+        st.write(val)
+        check = st.checkbox("Hecho", value=st.session_state.diet[key])
+        st.session_state.diet[key] = check
 
-    else:
-        opciones = [
-            "Pasta + pollo + tomate",
-            "Merluza + puré de patata",
-            "Arroz + atún + verduras",
-            "Pavo + quinoa + judías"
-        ]
-        kcal = "800 kcal"
+        if check:
+            total += 1
 
-    st.radio("Opciones", opciones)
-    st.write(f"🔥 {kcal}")
+    st.progress(total / 3)
 
-    st.markdown("---")
-    st.write("🔥 Total diario: 2150 kcal")
-    st.write("💧 Agua: 3–4L")
-    st.write("⚡ Creatina: 7g")
+    if total == 3:
+        st.success("🔥 Dieta perfecta")
 
-    if st.button("✅ Día completado"):
-        st.success("Dieta cumplida 💪")
+# PESO
+elif menu == "⚖️ Peso":
+
+    st.header("⚖️ Peso")
+
+    peso = st.number_input("Peso actual")
+    objetivo = st.number_input("Objetivo")
+
+    if st.button("Guardar peso"):
+        st.session_state.weights.append({
+            "fecha": datetime.now().strftime("%Y-%m-%d"),
+            "peso": peso,
+            "objetivo": objetivo
+        })
+        st.success("Guardado")
+
+    if st.session_state.weights:
+        df = pd.DataFrame(st.session_state.weights)
+        st.line_chart(df.set_index("fecha")["peso"])
+
+# PROGRESO
+elif menu == "📊 Progreso":
+
+    st.header("📊 Progreso general")
+
+    st.write(f"Entrenos: {len(st.session_state.workouts)}")
+
+    dieta_ok = sum(st.session_state.diet.values())
+    st.write(f"Dieta hoy: {dieta_ok}/3")
+
+    if st.session_state.weights:
+        df = pd.DataFrame(st.session_state.weights)
+        st.line_chart(df.set_index("fecha")["peso"])
