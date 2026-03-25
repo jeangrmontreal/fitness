@@ -1,4 +1,5 @@
 import streamlit as st
+import time
 
 st.title("💪 Mi Rutina Personal")
 
@@ -9,39 +10,34 @@ dia = st.selectbox(
 
 st.subheader("🏋️ Rutina")
 
-if dia == "Día 1":
-    rutina = [
-        "Press inclinado Smith 3x6-8",
-        "Press convergente 3x10-12",
-        "Aperturas 3x10-12",
-        "Laterales 4x12-15",
-        "Fondos 4x8-12"
-    ]
-
-elif dia == "Día 2":
-    rutina = [
-        "Remo barra 4 series",
-        "Dominadas 4x6-8",
-        "Remo mancuerna 3 series",
-        "Remo inclinado 3 series",
-        "Pájaros 3 series",
-        "Curl predicador 3 series",
-        "Curl martillo 2 series"
-    ]
-
-elif dia == "Día 3":
-    rutina = [
-        "Sentadilla 5 series",
-        "Prensa 3 series",
-        "Curl femoral 3 series",
-        "Extensión 3 series",
-        "Peso muerto rumano 3 series",
-        "Gemelos 4 series"
-    ]
-
-else:
-    rutina = [
+# Rutinas
+rutinas = {
+    "Día 1": [
         "Press inclinado Smith",
+        "Press convergente",
+        "Aperturas",
+        "Laterales",
+        "Fondos"
+    ],
+    "Día 2": [
+        "Remo barra",
+        "Dominadas",
+        "Remo mancuerna",
+        "Remo inclinado",
+        "Pájaros",
+        "Curl predicador",
+        "Curl martillo"
+    ],
+    "Día 3": [
+        "Sentadilla",
+        "Prensa",
+        "Curl femoral",
+        "Extensión",
+        "Peso muerto rumano",
+        "Gemelos"
+    ],
+    "Día 4": [
+        "Press inclinado",
         "Aperturas",
         "Press máquina",
         "Press militar",
@@ -49,16 +45,36 @@ else:
         "Skull crushers",
         "Press cerrado"
     ]
+}
 
-# checkboxes
+rutina = rutinas[dia]
+
+# Estado guardado
+if "progreso" not in st.session_state:
+    st.session_state.progreso = {}
+
 completados = 0
 
 for ejercicio in rutina:
-    hecho = st.checkbox(ejercicio)
-    if hecho:
+    key = f"{dia}_{ejercicio}"
+    estado = st.checkbox(ejercicio, key=key)
+
+    if estado:
         completados += 1
 
-st.write(f"Progreso: {completados}/{len(rutina)}")
+# Progreso
+st.write(f"📊 Progreso: {completados}/{len(rutina)}")
+
+st.progress(completados / len(rutina))
 
 if completados == len(rutina):
     st.success("🔥 Entrenamiento completado 💪")
+
+# ⏱️ Temporizador simple
+st.subheader("⏱️ Temporizador descanso")
+
+if st.button("Iniciar 30 segundos"):
+    for i in range(30, 0, -1):
+        st.write(f"⏳ {i} segundos")
+        time.sleep(1)
+    st.success("¡Descanso terminado!")")
