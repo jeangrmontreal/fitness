@@ -1,39 +1,57 @@
-import streamlit as st
+iimport streamlit as st
 
-st.title("💪 Mi Fitness App")
+st.title("💪 Mi Rutina Personal")
 
-st.write("Rutina simple para perder grasa y mantenerte activo")
-
-objetivo = st.selectbox(
-    "¿Cuál es tu objetivo?",
-    ["Perder grasa", "Mantenerte", "Ganar fuerza"]
+dia = st.selectbox(
+    "Selecciona el día",
+    ["Día 1", "Día 2", "Día 3", "Día 4"]
 )
 
-st.subheader("🔥 Rutina de hoy")
+st.subheader("🏋️ Rutina")
 
-if objetivo == "Perder grasa":
+if dia == "Día 1":
     rutina = [
-        "Flexiones — 3 x 10",
-        "Sentadillas — 3 x 15",
-        "Plancha — 30 segundos",
-        "Burpees — 3 x 8"
+        "Press de banca inclinado en Smith: 3x6-8",
+        "Press convergente: 3x10-12",
+        "Aperturas en contractora: 3x10-12",
+        "Elevaciones laterales: 4x12-15",
+        "Fondos en paralelas: 4x8-12"
     ]
-elif objetivo == "Mantenerte":
+
+elif dia == "Día 2":
     rutina = [
-        "Flexiones — 3 x 8",
-        "Sentadillas — 3 x 10",
-        "Plancha — 20 segundos"
+        "Remo con barra: 4x12/10/10/8",
+        "Dominadas: 4x6-8",
+        "Remo con mancuerna: 3x12/10/8",
+        "Remo en banco inclinado: 3x10-12",
+        "Pájaros con mancuernas: 3x10-12",
+        "Curl predicador: 3x10-12",
+        "Curl martillo: 2x10-8"
     ]
-else:
+
+elif dia == "Día 3":
     rutina = [
-        "Flexiones — 4 x 12",
-        "Sentadillas — 4 x 20",
-        "Plancha — 40 segundos",
-        "Zancadas — 3 x 12"
+        "Sentadillas: 2x6 + 3x10",
+        "Prensa: 3x8-10",
+        "Curl femoral: 3x10",
+        "Extensión de cuádriceps: 3x10",
+        "Peso muerto rumano: 3x10-12",
+        "Gemelos en Smith: 4x10-15"
+    ]
+
+elif dia == "Día 4":
+    rutina = [
+        "Press inclinado en Smith: 3x8/6/6",
+        "Aperturas en contractora: 3x10-12",
+        "Press inclinado en máquina: 3x10-12",
+        "Press militar: 2x8",
+        "Elevaciones laterales: 3x10-12",
+        "Skull crushers: 4x8-10",
+        "Press cerrado: 4x8-10"
     ]
 
 for ejercicio in rutina:
     st.write("👉", ejercicio)
 
-if st.button("✅ Rutina completada"):
-    st.success("¡Bien hecho! 💪 Sigue así")
+if st.button("✅ Entrenamiento completado"):
+    st.success("Buen trabajo 💪🔥")
