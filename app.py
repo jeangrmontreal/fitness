@@ -7,12 +7,25 @@ st.set_page_config(page_title="APOLLO FITNESS", page_icon="💪", layout="center
 
 st.title("🚀 APOLLO FITNESS")
 
-menu = st.sidebar.radio(
-    "Menú",
-    ["🏋️ Entrenamiento", "📊 Progreso", "📅 Historial"]
+# 👤 LOGIN SIMPLE
+if "usuario" not in st.session_state:
+    usuario = st.text_input("Introduce tu nombre")
+    if st.button("Entrar"):
+        st.session_state.usuario = usuario
+        st.success(f"Bienvenido {usuario}")
+        st.rerun()
+    st.stop()
+
+st.write(f"👤 {st.session_state.usuario}")
+
+# 📱 MENÚ MÓVIL
+menu = st.radio(
+    "Navegación",
+    ["🏋️ Entreno", "📊 Progreso", "📅 Historial", "🍽️ Dieta"],
+    horizontal=True
 )
 
-# datos
+# DATOS
 rutinas = {
     "Día 1": [("Press inclinado Smith", "pesado"), ("Press convergente", "hipertrofia"), ("Aperturas", "aislamiento"), ("Laterales", "aislamiento"), ("Fondos", "pesado")],
     "Día 2": [("Remo barra", "pesado"), ("Dominadas", "pesado"), ("Remo mancuerna", "hipertrofia"), ("Remo inclinado", "hipertrofia"), ("Pájaros", "aislamiento"), ("Curl predicador", "hipertrofia"), ("Curl martillo", "aislamiento")],
@@ -22,22 +35,31 @@ rutinas = {
 
 descansos = {"pesado": 90, "hipertrofia": 60, "aislamiento": 45}
 
+# 🍽️ DIETA (EDITA AQUÍ CON TU PLAN)
+dietas = {
+    "Día 1": ["Desayuno: Avena + proteína", "Comida: Pollo + arroz", "Cena: Tortilla + ensalada"],
+    "Día 2": ["Desayuno: Yogur + fruta", "Comida: Carne + patata", "Cena: Pescado + verduras"],
+    "Día 3": ["Desayuno: Tostadas + huevos", "Comida: Pasta + pollo", "Cena: Ensalada + atún"],
+    "Día 4": ["Desayuno: Batido", "Comida: Arroz + carne", "Cena: Verduras + pollo"]
+}
+
+# estado
 if "historial" not in st.session_state:
     st.session_state.historial = []
 
 # 🏋️ ENTRENAMIENTO
-if menu == "🏋️ Entrenamiento":
+if menu == "🏋️ Entreno":
 
-    dia = st.selectbox("Selecciona tu día", ["Día 1", "Día 2", "Día 3", "Día 4"])
-
+    dia = st.selectbox("Día", ["Día 1", "Día 2", "Día 3", "Día 4"])
     rutina = rutinas[dia]
+
     completados = 0
     pesos_registro = []
 
     for ejercicio, tipo in rutina:
-        st.markdown(f"### {ejercicio} ({tipo})")
+        st.markdown(f"### {ejercicio}")
 
-        peso = st.number_input(f"Peso (kg) - {ejercicio}", min_value=0.0, step=2.5, key=ejercicio+"_peso")
+        peso = st.number_input(f"{ejercicio} (kg)", min_value=0.0, step=2.5, key=ejercicio+"_peso")
         hecho = st.checkbox(f"✔️ {ejercicio}", key=ejercicio+"_check")
 
         if hecho:
@@ -49,45 +71,46 @@ if menu == "🏋️ Entrenamiento":
                     st.write(f"{i}s")
                     time.sleep(1)
 
-    st.write(f"📊 {completados}/{len(rutina)}")
     st.progress(completados / len(rutina))
 
     if completados == len(rutina):
-        if st.button("💾 Guardar entrenamiento"):
-            fecha = datetime.now().strftime("%Y-%m-%d %H:%M")
+        if st.button("💾 Guardar"):
+            fecha = datetime.now().strftime("%Y-%m-%d")
 
             for item in pesos_registro:
                 st.session_state.historial.append({
                     "fecha": fecha,
-                    "dia": dia,
                     "ejercicio": item["ejercicio"],
                     "peso": item["peso"]
                 })
 
-            st.success("Guardado 🚀")
+            st.success("Guardado 🔥")
 
 # 📊 PROGRESO
 elif menu == "📊 Progreso":
 
-    st.subheader("📈 Progreso")
-
     if st.session_state.historial:
         df = pd.DataFrame(st.session_state.historial)
 
-        ejercicio_sel = st.selectbox("Ejercicio", df["ejercicio"].unique())
-        df_f = df[df["ejercicio"] == ejercicio_sel]
+        ejercicio = st.selectbox("Ejercicio", df["ejercicio"].unique())
+        df_f = df[df["ejercicio"] == ejercicio]
 
         st.line_chart(df_f.set_index("fecha")["peso"])
     else:
-        st.write("No hay datos aún")
+        st.write("Sin datos")
 
 # 📅 HISTORIAL
 elif menu == "📅 Historial":
 
-    st.subheader("📅 Historial completo")
-
     if st.session_state.historial:
-        df = pd.DataFrame(st.session_state.historial)
-        st.dataframe(df)
+        st.dataframe(pd.DataFrame(st.session_state.historial))
     else:
-        st.write("Sin entrenamientos guardados")
+        st.write("Vacío")
+
+# 🍽️ DIETA
+elif menu == "🍽️ Dieta":
+
+    dia = st.selectbox("Día dieta", ["Día 1", "Día 2", "Día 3", "Día 4"])
+
+    for comida in dietas[dia]:
+        st.write("👉", comida)
