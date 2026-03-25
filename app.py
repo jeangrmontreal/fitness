@@ -77,4 +77,4 @@ if st.button("Iniciar 30 segundos"):
     for i in range(30, 0, -1):
         st.write(f"⏳ {i} segundos")
         time.sleep(1)
-    st.success("¡Descanso terminado!")")
+    st.success("¡Descanso terminado!")
