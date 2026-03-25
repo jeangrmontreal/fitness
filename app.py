@@ -1,5 +1,5 @@
 # 🍽️ DIETA PRO COMPLETA
-elif menu == "🍽️ Dieta":
+if menu == "🍽️ Dieta":
 
     st.subheader("🍽️ Plan nutricional APOLLO")
 
