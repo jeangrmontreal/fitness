@@ -1,5 +1,5 @@
 # 🍽️ DIETA PRO REAL
-elif menu == "🍽️ Dieta":
+if menu == "🍽️ Dieta":
 
     st.header("🍽️ Dieta detallada")
 
