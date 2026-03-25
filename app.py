@@ -26,7 +26,7 @@ if "weights" not in st.session_state:
 if "diet" not in st.session_state:
     st.session_state.diet = {"C1": False, "C2": False, "C3": False}
 
-# 📱 MENÚ (IMPORTANTE: SIEMPRE ANTES DEL IF)
+# 📱 MENÚ
 menu = st.sidebar.radio(
     "Menú",
     ["🏋️ Entreno", "🍽️ Dieta", "⚖️ Peso", "📊 Progreso"]
@@ -41,8 +41,8 @@ if menu == "🏋️ Entreno":
 
     completados = 0
 
-    for ej in ejercicios:
-        if st.checkbox(ej):
+    for i, ej in enumerate(ejercicios):
+        if st.checkbox(ej, key=f"ej_{i}"):
             completados += 1
 
     st.progress(completados / len(ejercicios))
@@ -52,7 +52,7 @@ if menu == "🏋️ Entreno":
             st.session_state.workouts.append(datetime.now().strftime("%Y-%m-%d"))
             st.success("Entreno guardado 💪")
 
-# 🍽️ DIETA
+# 🍽️ DIETA (ARREGLADA)
 elif menu == "🍽️ Dieta":
 
     st.header("🍽️ Dieta")
@@ -68,7 +68,12 @@ elif menu == "🍽️ Dieta":
     for key, val in comidas.items():
         st.subheader(val)
 
-        check = st.checkbox("Completada", value=st.session_state.diet[key])
+        check = st.checkbox(
+            "Completada",
+            value=st.session_state.diet[key],
+            key=f"dieta_{key}"   # 🔥 KEY ÚNICA (ARREGLADO)
+        )
+
         st.session_state.diet[key] = check
 
         if check:
@@ -89,8 +94,8 @@ elif menu == "⚖️ Peso":
 
     st.header("⚖️ Peso y objetivo")
 
-    peso = st.number_input("Peso actual (kg)", min_value=40.0, max_value=150.0)
-    objetivo = st.number_input("Peso objetivo (kg)", min_value=40.0, max_value=150.0)
+    peso = st.number_input("Peso actual (kg)", min_value=40.0, max_value=150.0, key="peso_actual")
+    objetivo = st.number_input("Peso objetivo (kg)", min_value=40.0, max_value=150.0, key="peso_obj")
 
     if st.button("Guardar peso"):
         st.session_state.weights.append({
