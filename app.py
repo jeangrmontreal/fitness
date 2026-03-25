@@ -46,20 +46,35 @@ if menu == "🏋️ Entrenamiento":
     rutina = rutinas[dia]
 
     completados = 0
-    pesos_registro = []
+    registro = []
 
     for i, ejercicio in enumerate(rutina):
+
         st.subheader(ejercicio)
 
-        peso = st.number_input("Peso (kg)", min_value=0.0, step=2.5, key=f"peso_{i}")
-        hecho = st.checkbox("Completar", key=f"check_{i}")
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            series = st.number_input("Series", 1, 10, 3, key=f"s_{i}")
+
+        with col2:
+            reps = st.number_input("Reps", 1, 20, 10, key=f"r_{i}")
+
+        with col3:
+            peso = st.number_input("Peso", 0.0, step=2.5, key=f"p_{i}")
+
+        hecho = st.checkbox("Completar", key=f"c_{i}")
 
         if hecho:
             completados += 1
-            pesos_registro.append({"ejercicio": ejercicio, "peso": peso})
+            registro.append({
+                "ejercicio": ejercicio,
+                "series": series,
+                "reps": reps,
+                "peso": peso
+            })
 
-            # 🔥 TEMPORIZADOR FIX
-            if st.button("Descanso", key=f"btn_{i}"):
+            if st.button("Descanso", key=f"b_{i}"):
                 timer = st.empty()
                 for t in range(30, 0, -1):
                     timer.markdown(f"## ⏳ {t} s")
@@ -73,11 +88,10 @@ if menu == "🏋️ Entrenamiento":
     if completados == len(rutina):
         if st.button("💾 Guardar entrenamiento"):
             fecha = datetime.now().strftime("%Y-%m-%d")
-            for item in pesos_registro:
+            for item in registro:
                 st.session_state.historial.append({
                     "fecha": fecha,
-                    "ejercicio": item["ejercicio"],
-                    "peso": item["peso"]
+                    **item
                 })
             st.success("Entrenamiento guardado 🔥")
 
@@ -102,16 +116,15 @@ elif menu == "📅 Historial":
     if st.session_state.historial:
         st.dataframe(pd.DataFrame(st.session_state.historial))
     else:
-        st.info("No hay entrenamientos guardados")
+        st.info("No hay entrenamientos")
 
-# ---------------- DIETA PRO ----------------
+# ---------------- DIETA ----------------
 elif menu == "🍽️ Dieta":
 
     st.header("🍽️ Dieta")
 
-    comida = st.selectbox("Selecciona comida", ["Comida 1", "Comida 2", "Comida 3"])
+    comida = st.selectbox("Comida", ["Comida 1", "Comida 2", "Comida 3"])
 
-    # COMIDA 1
     if comida == "Comida 1":
 
         opcion = st.radio("Opciones", [
@@ -122,31 +135,19 @@ elif menu == "🍽️ Dieta":
         ])
 
         if opcion == "Tostada jamón":
-            st.write("Pan integral 100g")
-            st.write("Jamón serrano 50g")
-            st.write("Tomate 50g")
-            st.write("Aceite 8ml")
-            st.write("Fruta 1 pieza")
+            st.write("Pan 100g | Jamón 50g | Tomate 50g | Aceite 8ml | Fruta")
 
         elif opcion == "Tostada huevos":
-            st.write("Pan 100g")
-            st.write("Huevo 100g")
-            st.write("Guacamole 20g")
+            st.write("Pan 100g | Huevo 100g | Guacamole 20g | Fruta")
 
         elif opcion == "Tortitas avena":
-            st.write("Avena 50g")
-            st.write("Huevo 60g")
-            st.write("Claras 80g")
-            st.write("Plátano 100g")
+            st.write("Avena 50g | Huevo 60g | Claras 80g | Plátano 100g")
 
         else:
-            st.write("Leche 300g")
-            st.write("Corn flakes 50g")
-            st.write("Cacao 10g")
+            st.write("Leche 300g | Corn flakes 50g | Cacao 10g")
 
         st.success("🔥 500 kcal")
 
-    # COMIDA 2
     elif comida == "Comida 2":
 
         opcion = st.radio("Opciones", [
@@ -157,25 +158,19 @@ elif menu == "🍽️ Dieta":
         ])
 
         if opcion == "Patata + atún":
-            st.write("Patata 300g")
-            st.write("Atún 160g")
-            st.write("Huevo 120g")
+            st.write("Patata 300g | Atún 160g | Huevo 120g")
 
         elif opcion == "Arroz + pollo":
-            st.write("Arroz 85g")
-            st.write("Pollo 150g")
+            st.write("Arroz 85g | Pollo 150g")
 
         elif opcion == "Pasta + carne":
-            st.write("Pasta 100g")
-            st.write("Carne 200g")
+            st.write("Pasta 100g | Carne 200g")
 
         else:
-            st.write("Macarrones 100g")
-            st.write("Salmón 220g")
+            st.write("Macarrones 100g | Salmón 220g")
 
         st.success("🔥 850 kcal")
 
-    # COMIDA 3
     else:
 
         opcion = st.radio("Opciones", [
@@ -186,20 +181,16 @@ elif menu == "🍽️ Dieta":
         ])
 
         if opcion == "Pasta + pollo":
-            st.write("Pasta 120g")
-            st.write("Pollo 200g")
+            st.write("Pasta 120g | Pollo 200g")
 
         elif opcion == "Merluza + patata":
-            st.write("Patata 300g")
-            st.write("Merluza 200g")
+            st.write("Patata 300g | Merluza 200g")
 
         elif opcion == "Arroz + atún":
-            st.write("Arroz 120g")
-            st.write("Atún 160g")
+            st.write("Arroz 120g | Atún 160g")
 
         else:
-            st.write("Quinoa 120g")
-            st.write("Pavo 200g")
+            st.write("Quinoa 120g | Pavo 200g")
 
         st.success("🔥 800 kcal")
 
@@ -213,10 +204,10 @@ elif menu == "⚖️ Peso":
 
     st.header("⚖️ Peso")
 
-    peso = st.number_input("Peso actual", min_value=40.0, max_value=150.0)
-    objetivo = st.number_input("Objetivo", min_value=40.0, max_value=150.0)
+    peso = st.number_input("Peso actual", 40.0, 150.0)
+    objetivo = st.number_input("Objetivo", 40.0, 150.0)
 
-    if st.button("Guardar peso"):
+    if st.button("Guardar"):
         st.session_state.pesos.append({
             "fecha": datetime.now().strftime("%Y-%m-%d"),
             "peso": peso,
