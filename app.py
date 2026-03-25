@@ -11,47 +11,54 @@ st.subheader("🏋️ Rutina")
 
 if dia == "Día 1":
     rutina = [
-        "Press de banca inclinado en Smith: 3x6-8",
-        "Press convergente: 3x10-12",
-        "Aperturas en contractora: 3x10-12",
-        "Elevaciones laterales: 4x12-15",
-        "Fondos en paralelas: 4x8-12"
+        "Press inclinado Smith 3x6-8",
+        "Press convergente 3x10-12",
+        "Aperturas 3x10-12",
+        "Laterales 4x12-15",
+        "Fondos 4x8-12"
     ]
 
 elif dia == "Día 2":
     rutina = [
-        "Remo con barra: 4x12/10/10/8",
-        "Dominadas: 4x6-8",
-        "Remo con mancuerna: 3x12/10/8",
-        "Remo en banco inclinado: 3x10-12",
-        "Pájaros con mancuernas: 3x10-12",
-        "Curl predicador: 3x10-12",
-        "Curl martillo: 2x10-8"
+        "Remo barra 4 series",
+        "Dominadas 4x6-8",
+        "Remo mancuerna 3 series",
+        "Remo inclinado 3 series",
+        "Pájaros 3 series",
+        "Curl predicador 3 series",
+        "Curl martillo 2 series"
     ]
 
 elif dia == "Día 3":
     rutina = [
-        "Sentadillas: 2x6 + 3x10",
-        "Prensa: 3x8-10",
-        "Curl femoral: 3x10",
-        "Extensión de cuádriceps: 3x10",
-        "Peso muerto rumano: 3x10-12",
-        "Gemelos en Smith: 4x10-15"
+        "Sentadilla 5 series",
+        "Prensa 3 series",
+        "Curl femoral 3 series",
+        "Extensión 3 series",
+        "Peso muerto rumano 3 series",
+        "Gemelos 4 series"
     ]
 
-elif dia == "Día 4":
+else:
     rutina = [
-        "Press inclinado en Smith: 3x8/6/6",
-        "Aperturas en contractora: 3x10-12",
-        "Press inclinado en máquina: 3x10-12",
-        "Press militar: 2x8",
-        "Elevaciones laterales: 3x10-12",
-        "Skull crushers: 4x8-10",
-        "Press cerrado: 4x8-10"
+        "Press inclinado Smith",
+        "Aperturas",
+        "Press máquina",
+        "Press militar",
+        "Laterales",
+        "Skull crushers",
+        "Press cerrado"
     ]
+
+# checkboxes
+completados = 0
 
 for ejercicio in rutina:
-    st.write("👉", ejercicio)
+    hecho = st.checkbox(ejercicio)
+    if hecho:
+        completados += 1
 
-if st.button("✅ Entrenamiento completado"):
-    st.success("Buen trabajo 💪🔥")
+st.write(f"Progreso: {completados}/{len(rutina)}")
+
+if completados == len(rutina):
+    st.success("🔥 Entrenamiento completado 💪")
