@@ -1,110 +1,127 @@
-import streamlit as st
-from datetime import datetime
-import pandas as pd
-
-st.set_page_config(page_title="APOLLO PRO", page_icon="💪", layout="centered")
-
-st.title("🚀 APOLLO PRO")
-
-# LOGIN
-if "user" not in st.session_state:
-    name = st.text_input("👤 Nombre")
-    if st.button("Entrar"):
-        st.session_state.user = name
-        st.rerun()
-    st.stop()
-
-st.sidebar.write(f"👤 {st.session_state.user}")
-
-# ESTADOS
-if "workouts" not in st.session_state:
-    st.session_state.workouts = []
-
-if "weights" not in st.session_state:
-    st.session_state.weights = []
-
-if "diet" not in st.session_state:
-    st.session_state.diet = {"C1": False, "C2": False, "C3": False}
-
-# MENU
-menu = st.sidebar.radio("Menú", ["🏋️ Entreno", "🍽️ Dieta", "⚖️ Peso", "📊 Progreso"])
-
-# ENTRENAMIENTO
-if menu == "🏋️ Entreno":
-
-    st.header("🏋️ Entrenamiento")
-
-    ejercicios = ["Press inclinado", "Sentadilla", "Dominadas", "Curl bíceps"]
-
-    completados = 0
-
-    for ej in ejercicios:
-        if st.checkbox(ej):
-            completados += 1
-
-    st.progress(completados / len(ejercicios))
-
-    if completados == len(ejercicios):
-        if st.button("Guardar"):
-            st.session_state.workouts.append(datetime.now().strftime("%Y-%m-%d"))
-            st.success("Entreno guardado")
-
-# DIETA
+# 🍽️ DIETA PRO REAL
 elif menu == "🍽️ Dieta":
 
-    st.header("🍽️ Dieta")
+    st.header("🍽️ Dieta detallada")
 
-    comidas = {
-        "C1": "500 kcal - Desayuno completo",
-        "C2": "850 kcal - Comida fuerte",
-        "C3": "800 kcal - Cena"
-    }
+    comida = st.selectbox("Selecciona comida", ["Comida 1", "Comida 2", "Comida 3"])
 
-    total = 0
+    if comida == "Comida 1":
 
-    for key, val in comidas.items():
-        st.write(val)
-        check = st.checkbox("Hecho", value=st.session_state.diet[key])
-        st.session_state.diet[key] = check
+        opcion = st.radio("Opciones", [
+            "Tostada jamón",
+            "Tostada huevos",
+            "Tortitas avena",
+            "Leche + cereales"
+        ])
 
-        if check:
-            total += 1
+        if opcion == "Tostada jamón":
+            st.write("Pan integral 100g")
+            st.write("Jamón serrano 50g")
+            st.write("Tomate 50g")
+            st.write("Aceite oliva 8ml")
+            st.write("Fruta 1 pieza")
 
-    st.progress(total / 3)
+        elif opcion == "Tostada huevos":
+            st.write("Pan integral 100g")
+            st.write("Huevo 100g")
+            st.write("Guacamole 20g")
+            st.write("Fruta 1 pieza")
 
-    if total == 3:
-        st.success("🔥 Dieta perfecta")
+        elif opcion == "Tortitas avena":
+            st.write("Harina avena 50g")
+            st.write("Huevo 60g")
+            st.write("Claras 80g")
+            st.write("Plátano 100g")
+            st.write("Fresas 80g")
+            st.write("Chocolate 5g")
+            st.write("Aceite 5g")
 
-# PESO
-elif menu == "⚖️ Peso":
+        else:
+            st.write("Leche 300g")
+            st.write("Corn flakes 50g")
+            st.write("Cacao 10g")
+            st.write("Fruta 1 pieza")
 
-    st.header("⚖️ Peso")
+        st.success("🔥 500 kcal")
 
-    peso = st.number_input("Peso actual")
-    objetivo = st.number_input("Objetivo")
+    elif comida == "Comida 2":
 
-    if st.button("Guardar peso"):
-        st.session_state.weights.append({
-            "fecha": datetime.now().strftime("%Y-%m-%d"),
-            "peso": peso,
-            "objetivo": objetivo
-        })
-        st.success("Guardado")
+        opcion = st.radio("Opciones", [
+            "Patata + atún",
+            "Arroz + pollo",
+            "Pasta + carne",
+            "Macarrones + salmón"
+        ])
 
-    if st.session_state.weights:
-        df = pd.DataFrame(st.session_state.weights)
-        st.line_chart(df.set_index("fecha")["peso"])
+        if opcion == "Patata + atún":
+            st.write("Patata 300g")
+            st.write("Atún 160g")
+            st.write("Huevo 120g")
+            st.write("Pimiento 50g")
+            st.write("Aceite 8ml")
 
-# PROGRESO
-elif menu == "📊 Progreso":
+        elif opcion == "Arroz + pollo":
+            st.write("Arroz 85g")
+            st.write("Pollo 150g")
+            st.write("Champiñones 50g")
+            st.write("Aceite 10ml")
 
-    st.header("📊 Progreso general")
+        elif opcion == "Pasta + carne":
+            st.write("Espaguetis 100g")
+            st.write("Carne 200g")
+            st.write("Tomate 100g")
 
-    st.write(f"Entrenos: {len(st.session_state.workouts)}")
+        else:
+            st.write("Macarrones 100g")
+            st.write("Salmón 220g")
+            st.write("Verduras")
+            st.write("Aceite 10ml")
 
-    dieta_ok = sum(st.session_state.diet.values())
-    st.write(f"Dieta hoy: {dieta_ok}/3")
+        st.success("🔥 850 kcal")
 
-    if st.session_state.weights:
-        df = pd.DataFrame(st.session_state.weights)
-        st.line_chart(df.set_index("fecha")["peso"])
+    else:
+
+        opcion = st.radio("Opciones", [
+            "Pasta + pollo",
+            "Merluza + patata",
+            "Arroz + atún",
+            "Pavo + quinoa"
+        ])
+
+        if opcion == "Pasta + pollo":
+            st.write("Macarrones 120g")
+            st.write("Pollo 200g")
+            st.write("Verduras 150g")
+
+        elif opcion == "Merluza + patata":
+            st.write("Patata 300g")
+            st.write("Merluza 200g")
+            st.write("Mantequilla 25g")
+            st.write("Aceite 10ml")
+
+        elif opcion == "Arroz + atún":
+            st.write("Arroz 120g")
+            st.write("Atún 160g")
+            st.write("Verduras")
+            st.write("Aceite 10ml")
+
+        else:
+            st.write("Quinoa 120g")
+            st.write("Pavo 200g")
+            st.write("Judías 200g")
+            st.write("Aceite 10ml")
+
+        st.success("🔥 800 kcal")
+
+    st.markdown("---")
+
+    st.subheader("📊 Totales")
+    st.write("🔥 2150 kcal")
+    st.write("💪 Proteínas: 190–200g")
+    st.write("🍚 Hidratos: 290–305g")
+    st.write("🥑 Grasas: 70–75g")
+
+    st.markdown("---")
+
+    st.write("💧 Agua: 3–4L")
+    st.write("⚡ Creatina: 7g")
