@@ -5,39 +5,14 @@ import pandas as pd
 
 st.set_page_config(page_title="APOLLO FITNESS", page_icon="💪", layout="centered")
 
-# 🌑 ESTILO NEGRO PRO
-st.markdown("""
-<style>
-body {
-    background-color: #000000;
-    color: white;
-}
-.block-container {
-    padding-top: 1rem;
-}
-.card {
-    background-color: #111111;
-    padding: 12px;
-    border-radius: 12px;
-    margin-bottom: 10px;
-    border: 1px solid #222;
-}
-.title {
-    font-size: 28px;
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 20px;
-}
-button {
-    border-radius: 10px !important;
-}
-</style>
-""", unsafe_allow_html=True)
+st.title("🚀 APOLLO FITNESS")
 
-st.markdown('<div class="title">🚀 APOLLO FITNESS</div>', unsafe_allow_html=True)
+menu = st.sidebar.radio(
+    "Menú",
+    ["🏋️ Entrenamiento", "📊 Progreso", "📅 Historial"]
+)
 
-dia = st.selectbox("📅 Día", ["Día 1", "Día 2", "Día 3", "Día 4"])
-
+# datos
 rutinas = {
     "Día 1": [("Press inclinado Smith", "pesado"), ("Press convergente", "hipertrofia"), ("Aperturas", "aislamiento"), ("Laterales", "aislamiento"), ("Fondos", "pesado")],
     "Día 2": [("Remo barra", "pesado"), ("Dominadas", "pesado"), ("Remo mancuerna", "hipertrofia"), ("Remo inclinado", "hipertrofia"), ("Pájaros", "aislamiento"), ("Curl predicador", "hipertrofia"), ("Curl martillo", "aislamiento")],
@@ -50,52 +25,69 @@ descansos = {"pesado": 90, "hipertrofia": 60, "aislamiento": 45}
 if "historial" not in st.session_state:
     st.session_state.historial = []
 
-rutina = rutinas[dia]
+# 🏋️ ENTRENAMIENTO
+if menu == "🏋️ Entrenamiento":
 
-st.subheader("🏋️ Entrenamiento")
+    dia = st.selectbox("Selecciona tu día", ["Día 1", "Día 2", "Día 3", "Día 4"])
 
-completados = 0
-pesos_registro = []
+    rutina = rutinas[dia]
+    completados = 0
+    pesos_registro = []
 
-for ejercicio, tipo in rutina:
-    st.markdown(f'<div class="card">💪 {ejercicio} ({tipo})</div>', unsafe_allow_html=True)
+    for ejercicio, tipo in rutina:
+        st.markdown(f"### {ejercicio} ({tipo})")
 
-    peso = st.number_input(f"Peso (kg) - {ejercicio}", min_value=0.0, step=2.5, key=ejercicio+"_peso")
+        peso = st.number_input(f"Peso (kg) - {ejercicio}", min_value=0.0, step=2.5, key=ejercicio+"_peso")
+        hecho = st.checkbox(f"✔️ {ejercicio}", key=ejercicio+"_check")
 
-    hecho = st.checkbox(f"✔️ {ejercicio}", key=ejercicio+"_check")
+        if hecho:
+            completados += 1
+            pesos_registro.append({"ejercicio": ejercicio, "peso": peso})
 
-    if hecho:
-        completados += 1
-        pesos_registro.append({"ejercicio": ejercicio, "peso": peso})
+            if st.button(f"Descanso {ejercicio}", key=ejercicio+"_btn"):
+                for i in range(descansos[tipo], 0, -1):
+                    st.write(f"{i}s")
+                    time.sleep(1)
 
-        if st.button(f"⏱️ Descanso {ejercicio}", key=ejercicio+"_btn"):
-            for i in range(descansos[tipo], 0, -1):
-                st.write(f"{i}s")
-                time.sleep(1)
-            st.success("🔥 Vamos al siguiente")
+    st.write(f"📊 {completados}/{len(rutina)}")
+    st.progress(completados / len(rutina))
 
-st.write(f"📊 {completados}/{len(rutina)}")
-st.progress(completados / len(rutina))
+    if completados == len(rutina):
+        if st.button("💾 Guardar entrenamiento"):
+            fecha = datetime.now().strftime("%Y-%m-%d %H:%M")
 
-if completados == len(rutina):
-    if st.button("💾 Guardar"):
-        fecha = datetime.now().strftime("%Y-%m-%d %H:%M")
-        for item in pesos_registro:
-            st.session_state.historial.append({
-                "fecha": fecha,
-                "ejercicio": item["ejercicio"],
-                "peso": item["peso"]
-            })
-        st.success("Guardado 🚀")
+            for item in pesos_registro:
+                st.session_state.historial.append({
+                    "fecha": fecha,
+                    "dia": dia,
+                    "ejercicio": item["ejercicio"],
+                    "peso": item["peso"]
+                })
 
-# historial + gráfico
-st.subheader("📈 Progreso")
+            st.success("Guardado 🚀")
 
-if st.session_state.historial:
-    df = pd.DataFrame(st.session_state.historial)
-    st.dataframe(df)
+# 📊 PROGRESO
+elif menu == "📊 Progreso":
 
-    ejercicio_sel = st.selectbox("Ejercicio", df["ejercicio"].unique())
-    df_f = df[df["ejercicio"] == ejercicio_sel]
+    st.subheader("📈 Progreso")
 
-    st.line_chart(df_f.set_index("fecha")["peso"])
+    if st.session_state.historial:
+        df = pd.DataFrame(st.session_state.historial)
+
+        ejercicio_sel = st.selectbox("Ejercicio", df["ejercicio"].unique())
+        df_f = df[df["ejercicio"] == ejercicio_sel]
+
+        st.line_chart(df_f.set_index("fecha")["peso"])
+    else:
+        st.write("No hay datos aún")
+
+# 📅 HISTORIAL
+elif menu == "📅 Historial":
+
+    st.subheader("📅 Historial completo")
+
+    if st.session_state.historial:
+        df = pd.DataFrame(st.session_state.historial)
+        st.dataframe(df)
+    else:
+        st.write("Sin entrenamientos guardados")
