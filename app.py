@@ -1,215 +1,126 @@
 import streamlit as st
-import time
+from supabase import create_client
 from datetime import datetime
 import pandas as pd
-import json
-import os
 
-st.set_page_config(page_title="APOLLO PRO+", page_icon="💪", layout="centered")
+# 🔥 PEGA AQUÍ TUS DATOS
+SUPABASE_URL = "https://obhfwfkfeyfoiyuwczbe.supabase.co"
+SUPABASE_KEY = "sb_publishable__6hcsOxp7_6blIRz-nOphQ_8RZCKW2d"
+
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+st.set_page_config(page_title="APOLLO PRO+", page_icon="💪")
 
 st.title("🚀 APOLLO PRO+")
 
-# ----------- DATA -----------
-DATA_FILE = "data.json"
-
-def load_data():
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r") as f:
-            try:
-                data = json.load(f)
-            except:
-                data = {}
-
-            if "usuarios" not in data:
-                data = {"usuarios": {}}
-
-            return data
-    return {"usuarios": {}}
-
-def save_data(data):
-    with open(DATA_FILE, "w") as f:
-        json.dump(data, f)
-
-data = load_data()
-
-# ----------- LOGIN -----------
+# -------- LOGIN --------
 if "usuario" not in st.session_state:
     st.session_state.usuario = ""
 
 if not st.session_state.usuario:
-    nombre = st.text_input("👤 Nombre de usuario")
+    nombre = st.text_input("👤 Nombre")
     if st.button("Entrar"):
         st.session_state.usuario = nombre
         st.rerun()
     st.stop()
 
 usuario = st.session_state.usuario
-
-# CREAR USUARIO
-if usuario not in data["usuarios"]:
-    data["usuarios"][usuario] = {
-        "historial": [],
-        "pesos": [],
-        "racha": 0,
-        "ultimo_entreno": ""
-    }
-    save_data(data)
-
-user_data = data["usuarios"][usuario]
-
-# LOGOUT
-if st.sidebar.button("Cerrar sesión"):
-    st.session_state.usuario = ""
-    st.rerun()
-
 st.sidebar.write(f"👤 {usuario}")
 
-# ----------- MENÚ -----------
-menu = st.sidebar.radio(
-    "Menú",
-    ["🏋️ Entrenamiento", "📊 Progreso", "📅 Historial", "🍽️ Dieta", "⚖️ Peso"]
-)
+# -------- BUSCAR USUARIO --------
+res = supabase.table("usuarios").select("*").eq("nombre", usuario).execute()
 
-# ----------- ENTRENAMIENTO -----------
-if menu == "🏋️ Entrenamiento":
+if not res.data:
+    supabase.table("usuarios").insert({
+        "nombre": usuario,
+        "historial": [],
+        "pesos": []
+    }).execute()
 
-    st.header("🏋️ Entrenamiento")
+res = supabase.table("usuarios").select("*").eq("nombre", usuario).execute()
+user_data = res.data[0]
 
-    rutinas = {
-        "Día 1": ["Press inclinado", "Press convergente", "Aperturas", "Laterales", "Fondos"],
-        "Día 2": ["Remo barra", "Dominadas", "Remo mancuerna", "Curl", "Pájaros"],
-        "Día 3": ["Sentadilla", "Prensa", "Curl femoral", "Extensión", "Gemelos"],
-        "Día 4": ["Press inclinado", "Aperturas", "Press máquina", "Press militar"]
-    }
+# -------- MENU --------
+menu = st.sidebar.radio("Menú", ["🏋️ Entreno", "📊 Progreso", "⚖️ Peso"])
 
-    dia = st.selectbox("Día", list(rutinas.keys()))
-    rutina = rutinas[dia]
+# -------- ENTRENAMIENTO --------
+if menu == "🏋️ Entreno":
 
-    completados = 0
+    st.header("Entrenamiento")
+
+    ejercicios = ["Press banca", "Sentadilla", "Dominadas"]
+
     registro = []
+    completados = 0
 
-    for i, ejercicio in enumerate(rutina):
-
-        st.subheader(ejercicio)
+    for i, ej in enumerate(ejercicios):
 
         col1, col2, col3 = st.columns(3)
 
         with col1:
-            series = st.number_input("Series", 1, 10, 3, key=f"{dia}_s_{i}")
+            series = st.number_input("Series", 1, 10, 3, key=f"s_{i}")
 
         with col2:
-            reps = st.number_input("Reps", 1, 20, 10, key=f"{dia}_r_{i}")
+            reps = st.number_input("Reps", 1, 20, 10, key=f"r_{i}")
 
         with col3:
-            peso = st.number_input("Peso", 0.0, step=2.5, key=f"{dia}_p_{i}")
+            peso = st.number_input("Peso", 0.0, step=2.5, key=f"p_{i}")
 
-        hecho = st.checkbox("Completar", key=f"{dia}_c_{i}")
+        hecho = st.checkbox(ej, key=f"c_{i}")
 
         if hecho:
             completados += 1
             registro.append({
-                "ejercicio": ejercicio,
+                "ejercicio": ej,
                 "series": series,
                 "reps": reps,
                 "peso": peso
             })
 
-            if st.button("Descanso", key=f"{dia}_b_{i}"):
-                timer = st.empty()
-                for t in range(30, 0, -1):
-                    timer.markdown(f"## ⏳ {t}s")
-                    time.sleep(1)
-                timer.markdown("## ✅ Listo")
+    if completados == len(ejercicios):
+        if st.button("Guardar entrenamiento"):
 
-        st.divider()
+            historial = user_data["historial"]
+            historial.extend(registro)
 
-    st.progress(completados / len(rutina))
+            supabase.table("usuarios").update({
+                "historial": historial
+            }).eq("nombre", usuario).execute()
 
-    if completados == len(rutina):
-        if st.button("💾 Guardar entrenamiento"):
-
-            hoy = datetime.now().strftime("%Y-%m-%d")
-
-            for item in registro:
-                user_data["historial"].append({
-                    "fecha": hoy,
-                    "dia": dia,
-                    **item
-                })
-
-            if user_data["ultimo_entreno"] != hoy:
-                user_data["racha"] += 1
-                user_data["ultimo_entreno"] = hoy
-
-            save_data(data)
             st.success("Entreno guardado 🔥")
 
-# ----------- PROGRESO -----------
+# -------- PROGRESO --------
 elif menu == "📊 Progreso":
 
-    st.header("📊 Progreso")
-
-    st.metric("🔥 Racha actual", user_data["racha"])
+    st.header("Progreso")
 
     if user_data["historial"]:
         df = pd.DataFrame(user_data["historial"])
         ejercicio = st.selectbox("Ejercicio", df["ejercicio"].unique())
         df_f = df[df["ejercicio"] == ejercicio]
-        st.line_chart(df_f.set_index("fecha")["peso"])
+        st.line_chart(df_f.set_index("ejercicio")["peso"])
     else:
         st.info("Sin datos")
 
-# ----------- HISTORIAL -----------
-elif menu == "📅 Historial":
-
-    st.header("📅 Historial")
-
-    if user_data["historial"]:
-        st.dataframe(pd.DataFrame(user_data["historial"]))
-    else:
-        st.info("Vacío")
-
-# ----------- DIETA ----------------
-elif menu == "🍽️ Dieta":
-
-    st.header("🍽️ Dieta")
-
-    comida = st.selectbox("Comida", ["Comida 1", "Comida 2", "Comida 3"])
-
-    if comida == "Comida 1":
-        st.write("Pan 100g | Jamón 50g | Tomate 50g | Aceite 8ml | Fruta")
-        st.success("🔥 500 kcal")
-
-    elif comida == "Comida 2":
-        st.write("Arroz 85g | Pollo 150g")
-        st.success("🔥 850 kcal")
-
-    else:
-        st.write("Pasta 120g | Pollo 200g")
-        st.success("🔥 800 kcal")
-
-    st.markdown("---")
-    st.write("🔥 Total: 2150 kcal")
-    st.write("💧 Agua: 3–4L")
-    st.write("⚡ Creatina: 7g")
-
-# ----------- PESO -----------
+# -------- PESO --------
 elif menu == "⚖️ Peso":
 
-    st.header("⚖️ Peso")
+    st.header("Peso")
 
-    peso = st.number_input("Peso actual", 40.0, 150.0)
-    objetivo = st.number_input("Objetivo", 40.0, 150.0)
+    peso = st.number_input("Peso actual")
+    objetivo = st.number_input("Objetivo")
 
-    if st.button("Guardar"):
-        user_data["pesos"].append({
+    if st.button("Guardar peso"):
+
+        pesos = user_data["pesos"]
+        pesos.append({
             "fecha": datetime.now().strftime("%Y-%m-%d"),
             "peso": peso,
             "objetivo": objetivo
         })
-        save_data(data)
-        st.success("Guardado")
 
-    if user_data["pesos"]:
-        df = pd.DataFrame(user_data["pesos"])
-        st.line_chart(df.set_index("fecha")["peso"])
+        supabase.table("usuarios").update({
+            "pesos": pesos
+        }).eq("nombre", usuario).execute()
+
+        st.success("Peso guardado")
