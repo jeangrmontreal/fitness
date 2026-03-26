@@ -2,12 +2,29 @@ import streamlit as st
 import time
 from datetime import datetime
 import pandas as pd
+import json
+import os
 
 st.set_page_config(page_title="APOLLO FITNESS", page_icon="💪", layout="centered")
 
 st.title("🚀 APOLLO FITNESS")
 
-# ---------------- LOGIN MEJORADO ----------------
+# ----------- ARCHIVO DATOS -----------
+DATA_FILE = "data.json"
+
+def load_data():
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, "r") as f:
+            return json.load(f)
+    return {"historial": [], "pesos": []}
+
+def save_data(data):
+    with open(DATA_FILE, "w") as f:
+        json.dump(data, f)
+
+data = load_data()
+
+# ----------- LOGIN -----------
 if "usuario" not in st.session_state:
     st.session_state.usuario = ""
 
@@ -27,20 +44,13 @@ if st.sidebar.button("Cerrar sesión"):
 
 st.sidebar.write(f"👤 {usuario}")
 
-# ---------------- ESTADOS ----------------
-if "historial" not in st.session_state:
-    st.session_state.historial = []
-
-if "pesos" not in st.session_state:
-    st.session_state.pesos = []
-
-# ---------------- MENÚ ----------------
+# ----------- MENÚ -----------
 menu = st.sidebar.radio(
     "Menú",
     ["🏋️ Entrenamiento", "📊 Progreso", "📅 Historial", "🍽️ Dieta", "⚖️ Peso"]
 )
 
-# ---------------- ENTRENAMIENTO ----------------
+# ----------- ENTRENAMIENTO -----------
 if menu == "🏋️ Entrenamiento":
 
     st.header("🏋️ Entrenamiento")
@@ -65,15 +75,15 @@ if menu == "🏋️ Entrenamiento":
         col1, col2, col3 = st.columns(3)
 
         with col1:
-            series = st.number_input("Series", 1, 10, 3, key=f"s_{i}")
+            series = st.number_input("Series", 1, 10, 3, key=f"{dia}_s_{i}")
 
         with col2:
-            reps = st.number_input("Reps", 1, 20, 10, key=f"r_{i}")
+            reps = st.number_input("Reps", 1, 20, 10, key=f"{dia}_r_{i}")
 
         with col3:
-            peso = st.number_input("Peso", 0.0, step=2.5, key=f"p_{i}")
+            peso = st.number_input("Peso", 0.0, step=2.5, key=f"{dia}_p_{i}")
 
-        hecho = st.checkbox("Completar", key=f"c_{i}")
+        hecho = st.checkbox("Completar", key=f"{dia}_c_{i}")
 
         if hecho:
             completados += 1
@@ -84,8 +94,7 @@ if menu == "🏋️ Entrenamiento":
                 "peso": peso
             })
 
-            # ⏱️ TEMPORIZADOR PRO
-            if st.button("Descanso", key=f"b_{i}"):
+            if st.button("Descanso", key=f"{dia}_b_{i}"):
                 timer = st.empty()
                 for t in range(30, 0, -1):
                     timer.markdown(f"## ⏳ {t} s")
@@ -100,117 +109,46 @@ if menu == "🏋️ Entrenamiento":
         if st.button("💾 Guardar entrenamiento"):
             fecha = datetime.now().strftime("%Y-%m-%d")
             for item in registro:
-                st.session_state.historial.append({
+                data["historial"].append({
                     "fecha": fecha,
                     **item
                 })
-            st.success("Entrenamiento guardado 🔥")
+            save_data(data)
+            st.success("Guardado 🔥")
 
-# ---------------- PROGRESO ----------------
+# ----------- PROGRESO -----------
 elif menu == "📊 Progreso":
 
     st.header("📊 Progreso")
 
-    if st.session_state.historial:
-        df = pd.DataFrame(st.session_state.historial)
+    if data["historial"]:
+        df = pd.DataFrame(data["historial"])
         ejercicio = st.selectbox("Ejercicio", df["ejercicio"].unique())
         df_f = df[df["ejercicio"] == ejercicio]
         st.line_chart(df_f.set_index("fecha")["peso"])
     else:
-        st.info("Aún no hay datos")
+        st.info("Sin datos")
 
-# ---------------- HISTORIAL ----------------
+# ----------- HISTORIAL -----------
 elif menu == "📅 Historial":
 
     st.header("📅 Historial")
 
-    if st.session_state.historial:
-        st.dataframe(pd.DataFrame(st.session_state.historial))
+    if data["historial"]:
+        st.dataframe(pd.DataFrame(data["historial"]))
     else:
-        st.info("No hay entrenamientos")
+        st.info("Vacío")
 
-# ---------------- DIETA ----------------
+# ----------- DIETA -----------
 elif menu == "🍽️ Dieta":
 
     st.header("🍽️ Dieta")
 
-    comida = st.selectbox("Comida", ["Comida 1", "Comida 2", "Comida 3"])
-
-    if comida == "Comida 1":
-
-        opcion = st.radio("Opciones", [
-            "Tostada jamón",
-            "Tostada huevos",
-            "Tortitas avena",
-            "Leche + cereales"
-        ])
-
-        if opcion == "Tostada jamón":
-            st.write("Pan 100g | Jamón 50g | Tomate 50g | Aceite 8ml | Fruta")
-
-        elif opcion == "Tostada huevos":
-            st.write("Pan 100g | Huevo 100g | Guacamole 20g | Fruta")
-
-        elif opcion == "Tortitas avena":
-            st.write("Avena 50g | Huevo 60g | Claras 80g | Plátano 100g")
-
-        else:
-            st.write("Leche 300g | Corn flakes 50g | Cacao 10g")
-
-        st.success("🔥 500 kcal")
-
-    elif comida == "Comida 2":
-
-        opcion = st.radio("Opciones", [
-            "Patata + atún",
-            "Arroz + pollo",
-            "Pasta + carne",
-            "Macarrones + salmón"
-        ])
-
-        if opcion == "Patata + atún":
-            st.write("Patata 300g | Atún 160g | Huevo 120g")
-
-        elif opcion == "Arroz + pollo":
-            st.write("Arroz 85g | Pollo 150g")
-
-        elif opcion == "Pasta + carne":
-            st.write("Pasta 100g | Carne 200g")
-
-        else:
-            st.write("Macarrones 100g | Salmón 220g")
-
-        st.success("🔥 850 kcal")
-
-    else:
-
-        opcion = st.radio("Opciones", [
-            "Pasta + pollo",
-            "Merluza + patata",
-            "Arroz + atún",
-            "Pavo + quinoa"
-        ])
-
-        if opcion == "Pasta + pollo":
-            st.write("Pasta 120g | Pollo 200g")
-
-        elif opcion == "Merluza + patata":
-            st.write("Patata 300g | Merluza 200g")
-
-        elif opcion == "Arroz + atún":
-            st.write("Arroz 120g | Atún 160g")
-
-        else:
-            st.write("Quinoa 120g | Pavo 200g")
-
-        st.success("🔥 800 kcal")
-
-    st.markdown("---")
-    st.write("🔥 Total: 2150 kcal")
+    st.write("🔥 2150 kcal")
     st.write("💧 Agua: 3–4L")
     st.write("⚡ Creatina: 7g")
 
-# ---------------- PESO ----------------
+# ----------- PESO -----------
 elif menu == "⚖️ Peso":
 
     st.header("⚖️ Peso")
@@ -219,13 +157,14 @@ elif menu == "⚖️ Peso":
     objetivo = st.number_input("Objetivo", 40.0, 150.0)
 
     if st.button("Guardar"):
-        st.session_state.pesos.append({
+        data["pesos"].append({
             "fecha": datetime.now().strftime("%Y-%m-%d"),
             "peso": peso,
             "objetivo": objetivo
         })
+        save_data(data)
         st.success("Guardado")
 
-    if st.session_state.pesos:
-        df = pd.DataFrame(st.session_state.pesos)
+    if data["pesos"]:
+        df = pd.DataFrame(data["pesos"])
         st.line_chart(df.set_index("fecha")["peso"])
