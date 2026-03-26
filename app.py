@@ -9,13 +9,21 @@ st.set_page_config(page_title="APOLLO PRO+", page_icon="💪", layout="centered"
 
 st.title("🚀 APOLLO PRO+")
 
-# ---------------- DATA ----------------
+# ----------- DATA -----------
 DATA_FILE = "data.json"
 
 def load_data():
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, "r") as f:
-            return json.load(f)
+            try:
+                data = json.load(f)
+            except:
+                data = {}
+
+            if "usuarios" not in data:
+                data = {"usuarios": {}}
+
+            return data
     return {"usuarios": {}}
 
 def save_data(data):
@@ -24,7 +32,7 @@ def save_data(data):
 
 data = load_data()
 
-# ---------------- LOGIN ----------------
+# ----------- LOGIN -----------
 if "usuario" not in st.session_state:
     st.session_state.usuario = ""
 
@@ -37,7 +45,7 @@ if not st.session_state.usuario:
 
 usuario = st.session_state.usuario
 
-# CREAR USUARIO SI NO EXISTE
+# CREAR USUARIO
 if usuario not in data["usuarios"]:
     data["usuarios"][usuario] = {
         "historial": [],
@@ -56,13 +64,13 @@ if st.sidebar.button("Cerrar sesión"):
 
 st.sidebar.write(f"👤 {usuario}")
 
-# ---------------- MENU ----------------
+# ----------- MENÚ -----------
 menu = st.sidebar.radio(
     "Menú",
     ["🏋️ Entrenamiento", "📊 Progreso", "📅 Historial", "🍽️ Dieta", "⚖️ Peso"]
 )
 
-# ---------------- ENTRENAMIENTO ----------------
+# ----------- ENTRENAMIENTO -----------
 if menu == "🏋️ Entrenamiento":
 
     st.header("🏋️ Entrenamiento")
@@ -115,8 +123,7 @@ if menu == "🏋️ Entrenamiento":
 
         st.divider()
 
-    progreso = completados / len(rutina)
-    st.progress(progreso)
+    st.progress(completados / len(rutina))
 
     if completados == len(rutina):
         if st.button("💾 Guardar entrenamiento"):
@@ -130,7 +137,6 @@ if menu == "🏋️ Entrenamiento":
                     **item
                 })
 
-            # 🔥 Racha (streak)
             if user_data["ultimo_entreno"] != hoy:
                 user_data["racha"] += 1
                 user_data["ultimo_entreno"] = hoy
@@ -138,7 +144,7 @@ if menu == "🏋️ Entrenamiento":
             save_data(data)
             st.success("Entreno guardado 🔥")
 
-# ---------------- PROGRESO ----------------
+# ----------- PROGRESO -----------
 elif menu == "📊 Progreso":
 
     st.header("📊 Progreso")
@@ -153,7 +159,7 @@ elif menu == "📊 Progreso":
     else:
         st.info("Sin datos")
 
-# ---------------- HISTORIAL ----------------
+# ----------- HISTORIAL -----------
 elif menu == "📅 Historial":
 
     st.header("📅 Historial")
@@ -163,7 +169,7 @@ elif menu == "📅 Historial":
     else:
         st.info("Vacío")
 
-# ---------------- DIETA ----------------
+# ----------- DIETA ----------------
 elif menu == "🍽️ Dieta":
 
     st.header("🍽️ Dieta")
@@ -184,8 +190,10 @@ elif menu == "🍽️ Dieta":
 
     st.markdown("---")
     st.write("🔥 Total: 2150 kcal")
+    st.write("💧 Agua: 3–4L")
+    st.write("⚡ Creatina: 7g")
 
-# ---------------- PESO ----------------
+# ----------- PESO -----------
 elif menu == "⚖️ Peso":
 
     st.header("⚖️ Peso")
