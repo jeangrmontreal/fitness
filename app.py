@@ -3,9 +3,9 @@ from supabase import create_client
 from datetime import datetime
 import pandas as pd
 
-# 🔥 PEGA AQUÍ TUS DATOS
-SUPABASE_URL = "https://obhfwfkfeyfoiyuwczbe.supabase.co"
-SUPABASE_KEY = "sb_publishable__6hcsOxp7_6blIRz-nOphQ_8RZCKW2d"
+# 🔥 PON TUS DATOS AQUÍ
+SUPABASE_URL = "PEGA_TU_URL_AQUI"
+SUPABASE_KEY = "PEGA_TU_PUBLISHABLE_KEY_AQUI"
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -20,24 +20,31 @@ if "usuario" not in st.session_state:
 if not st.session_state.usuario:
     nombre = st.text_input("👤 Nombre")
     if st.button("Entrar"):
-        st.session_state.usuario = nombre
+        st.session_state.usuario = nombre.strip()
         st.rerun()
     st.stop()
 
 usuario = st.session_state.usuario
 st.sidebar.write(f"👤 {usuario}")
 
+# -------- TABLA (IMPORTANTE MAYÚSCULAS) --------
+TABLE = "USUARIOS"
+
 # -------- BUSCAR USUARIO --------
-res = supabase.table("usuarios").select("*").eq("nombre", usuario).execute()
+try:
+    res = supabase.table(TABLE).select("*").eq("nombre", usuario).execute()
+except Exception as e:
+    st.error("Error conectando con Supabase")
+    st.stop()
 
 if not res.data:
-    supabase.table("usuarios").insert({
+    supabase.table(TABLE).insert({
         "nombre": usuario,
         "historial": [],
         "pesos": []
     }).execute()
+    res = supabase.table(TABLE).select("*").eq("nombre", usuario).execute()
 
-res = supabase.table("usuarios").select("*").eq("nombre", usuario).execute()
 user_data = res.data[0]
 
 # -------- MENU --------
@@ -77,13 +84,15 @@ if menu == "🏋️ Entreno":
                 "peso": peso
             })
 
+    st.progress(completados / len(ejercicios))
+
     if completados == len(ejercicios):
         if st.button("Guardar entrenamiento"):
 
-            historial = user_data["historial"]
+            historial = user_data["historial"] or []
             historial.extend(registro)
 
-            supabase.table("usuarios").update({
+            supabase.table(TABLE).update({
                 "historial": historial
             }).eq("nombre", usuario).execute()
 
@@ -98,7 +107,9 @@ elif menu == "📊 Progreso":
         df = pd.DataFrame(user_data["historial"])
         ejercicio = st.selectbox("Ejercicio", df["ejercicio"].unique())
         df_f = df[df["ejercicio"] == ejercicio]
-        st.line_chart(df_f.set_index("ejercicio")["peso"])
+
+        if not df_f.empty:
+            st.line_chart(df_f["peso"])
     else:
         st.info("Sin datos")
 
@@ -112,14 +123,14 @@ elif menu == "⚖️ Peso":
 
     if st.button("Guardar peso"):
 
-        pesos = user_data["pesos"]
+        pesos = user_data["pesos"] or []
         pesos.append({
             "fecha": datetime.now().strftime("%Y-%m-%d"),
             "peso": peso,
             "objetivo": objetivo
         })
 
-        supabase.table("usuarios").update({
+        supabase.table(TABLE).update({
             "pesos": pesos
         }).eq("nombre", usuario).execute()
 
