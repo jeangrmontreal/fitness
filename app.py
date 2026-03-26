@@ -7,24 +7,34 @@ st.set_page_config(page_title="APOLLO FITNESS", page_icon="💪", layout="center
 
 st.title("🚀 APOLLO FITNESS")
 
-# LOGIN
+# ---------------- LOGIN MEJORADO ----------------
 if "usuario" not in st.session_state:
-    usuario = st.text_input("👤 Tu nombre")
+    st.session_state.usuario = ""
+
+if not st.session_state.usuario:
+    nombre = st.text_input("👤 Tu nombre")
     if st.button("Entrar"):
-        st.session_state.usuario = usuario
+        st.session_state.usuario = nombre
         st.rerun()
     st.stop()
 
-st.sidebar.write(f"👤 {st.session_state.usuario}")
+usuario = st.session_state.usuario
 
-# ESTADOS
+# LOGOUT
+if st.sidebar.button("Cerrar sesión"):
+    st.session_state.usuario = ""
+    st.rerun()
+
+st.sidebar.write(f"👤 {usuario}")
+
+# ---------------- ESTADOS ----------------
 if "historial" not in st.session_state:
     st.session_state.historial = []
 
 if "pesos" not in st.session_state:
     st.session_state.pesos = []
 
-# MENÚ
+# ---------------- MENÚ ----------------
 menu = st.sidebar.radio(
     "Menú",
     ["🏋️ Entrenamiento", "📊 Progreso", "📅 Historial", "🍽️ Dieta", "⚖️ Peso"]
@@ -74,6 +84,7 @@ if menu == "🏋️ Entrenamiento":
                 "peso": peso
             })
 
+            # ⏱️ TEMPORIZADOR PRO
             if st.button("Descanso", key=f"b_{i}"):
                 timer = st.empty()
                 for t in range(30, 0, -1):
