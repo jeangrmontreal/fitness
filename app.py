@@ -4,7 +4,7 @@ from supabase import create_client
 st.title("🚀 APOLLO v1")
 
 SUPABASE_URL = "https://obhfwfkfeyfoiyuwczbe.supabase.co"
-SUPABASE_KEY = "PEGA_TU_KEY_AQUI"
+SUPABASE_KEY = "sb_publishable__6hcsOxp7_6blIRz-nOphQ_8RZCKW2d"
 
 # conectar
 try:
