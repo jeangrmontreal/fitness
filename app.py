@@ -195,7 +195,7 @@ elif menu == "📊":
 
     st.markdown("### 📊 Progreso")
 
-    # PESO CORPORAL
+    # -------- PESO CORPORAL --------
     st.markdown("#### ⚖️ Peso corporal")
 
     peso = st.number_input("Peso actual")
@@ -215,7 +215,7 @@ elif menu == "📊":
 
     st.markdown("---")
 
-    # PROGRESO EJERCICIOS
+    # -------- PROGRESO EJERCICIOS --------
     st.markdown("#### 🏋️ Progreso gym")
 
     registros = []
@@ -239,3 +239,34 @@ elif menu == "📊":
         df_filtrado = df[df["ejercicio"] == ejercicio]
 
         st.line_chart(df_filtrado.set_index("fecha")["peso"])
+
+    else:
+        st.info("Sin datos aún")
+
+    st.markdown("---")
+
+    # -------- HISTORIAL DIETA --------
+    st.markdown("#### 🍽️ Historial dieta")
+
+    if data["dietas"]:
+
+        df_dieta = pd.DataFrame(data["dietas"])
+
+        # gráfico kcal
+        st.line_chart(df_dieta.set_index("fecha")["kcal"])
+
+        st.markdown("### 📋 Detalle")
+
+        for d in reversed(data["dietas"]):
+
+            st.markdown(f"**📅 {d['fecha']}**")
+            st.write(f"🔥 {d['kcal']} kcal")
+
+            if "comidas" in d:
+                for comida, opcion in d["comidas"].items():
+                    st.write(f"- {comida}: {opcion}")
+
+            st.markdown("---")
+
+    else:
+        st.info("No hay dietas guardadas aún")
