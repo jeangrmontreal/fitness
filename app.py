@@ -1,7 +1,7 @@
 import streamlit as st
 from supabase import create_client
 
-st.title("🚀 APOLLO v1")
+st.title("🚀 ROCIO TE AMO")
 
 SUPABASE_URL = "https://obhfwfkfeyfoiyuwczbe.supabase.co"
 SUPABASE_KEY = "sb_publishable__6hcsOxp7_6blIRz-nOphQ_8RZCKW2d"
