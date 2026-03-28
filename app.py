@@ -49,18 +49,26 @@ series = st.number_input("Series", 1, 10)
 
 if st.button("💾 Guardar entreno"):
 
-    historial = user["historial"] or []
+    # 🔥 FIX JSON SEGURO
+    historial = user.get("historial")
+
+    if not isinstance(historial, list):
+        historial = []
 
     historial.append({
         "fecha": datetime.now().strftime("%Y-%m-%d"),
         "ejercicio": ejercicio,
-        "peso": peso,
-        "reps": reps,
-        "series": series
+        "peso": float(peso),
+        "reps": int(reps),
+        "series": int(series)
     })
 
-    supabase.table("usuarios").update({
-        "historial": historial
-    }).eq("nombre", usuario).execute()
+    try:
+        supabase.table("usuarios").update({
+            "historial": historial
+        }).eq("nombre", usuario).execute()
 
-    st.success("🔥 Entreno guardado")
+        st.success("🔥 Entreno guardado")
+
+    except Exception as e:
+        st.error("❌ Error guardando")
