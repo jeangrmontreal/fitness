@@ -1,105 +1,171 @@
 import streamlit as st
+import json
 from datetime import datetime
 import pandas as pd
 import time
+import os
 
 st.set_page_config(page_title="APOLLO", layout="centered")
 
-st.title("💪 APOLLO")
+# -------- FILE STORAGE --------
+FILE = "data.json"
 
-# -------- MENU --------
-menu = st.radio("", ["🏋️ Entreno", "🍽️ Dieta", "📊 Progreso"])
+if not os.path.exists(FILE):
+    with open(FILE, "w") as f:
+        json.dump({"entrenos": [], "dietas": [], "pesos": []}, f)
+
+with open(FILE, "r") as f:
+    data = json.load(f)
+
+# -------- UI --------
+st.markdown("## 💪 APOLLO")
+
+menu = st.radio("", ["🏋️", "🍽️", "📊"], horizontal=True)
 
 # -------- ENTRENAMIENTO --------
-if menu == "🏋️ Entreno":
+if menu == "🏋️":
 
-    st.header("🏋️ Rutina")
+    st.subheader("Entreno")
 
-    ejercicios = [
-        "Press inclinado en Smith",
-        "Press convergente",
-        "Aperturas en contractora",
-        "Elevaciones laterales",
-        "Fondos en paralelas"
-    ]
+    rutina = {
+        "Pecho": [
+            "Press inclinado en Smith",
+            "Press convergente",
+            "Aperturas en contractora"
+        ],
+        "Hombro": [
+            "Elevaciones laterales"
+        ],
+        "Tríceps": [
+            "Fondos en paralelas"
+        ]
+    }
 
     if "timer" not in st.session_state:
         st.session_state.timer = 0
 
-    timer_placeholder = st.empty()
+    timer_box = st.empty()
 
-    completados = 0
+    registro = []
 
-    for i, ej in enumerate(ejercicios):
+    for grupo, ejercicios in rutina.items():
 
-        st.subheader(ej)
+        st.markdown(f"### {grupo}")
 
-        peso = st.number_input("Peso", 0.0, step=2.5, key=f"p{i}")
-        check = st.checkbox("Completado", key=f"c{i}")
+        for i, ej in enumerate(ejercicios):
 
-        if check:
-            completados += 1
+            st.write(f"➡️ {ej}")
 
-        if st.button("⏱️ Descanso", key=f"t{i}"):
-            st.session_state.timer = 30
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                series = st.number_input("S", 1, 10, 3, key=f"s{grupo}{i}")
+            with col2:
+                reps = st.number_input("R", 1, 20, 10, key=f"r{grupo}{i}")
+            with col3:
+                peso = st.number_input("Kg", 0.0, step=2.5, key=f"p{grupo}{i}")
+
+            if st.button("⏱️", key=f"t{grupo}{i}"):
+                st.session_state.timer = 30
+
+            registro.append({
+                "grupo": grupo,
+                "ejercicio": ej,
+                "series": series,
+                "reps": reps,
+                "peso": peso
+            })
 
     if st.session_state.timer > 0:
-        timer_placeholder.markdown(f"## ⏳ {st.session_state.timer}s")
+        timer_box.markdown(f"## ⏳ {st.session_state.timer}s")
         time.sleep(1)
         st.session_state.timer -= 1
         st.rerun()
 
-    st.progress(completados / len(ejercicios))
+    if st.button("💾 Guardar entreno"):
+
+        data["entrenos"].append({
+            "fecha": datetime.now().strftime("%Y-%m-%d"),
+            "data": registro
+        })
+
+        with open(FILE, "w") as f:
+            json.dump(data, f)
+
+        st.success("Guardado 🔥")
 
 # -------- DIETA --------
-elif menu == "🍽️ Dieta":
+elif menu == "🍽️":
 
-    st.header("🍽️ Dieta")
+    st.subheader("Dieta")
 
-    # DESAYUNO
-    desayuno = st.selectbox("Desayuno", [
-        "Tostada + jamón + fruta (500 kcal)",
-        "Huevos + guacamole + fruta (500 kcal)",
-        "Tortitas avena + fresas (500 kcal)",
-        "Leche + cereales + fruta (500 kcal)"
-    ])
+    dieta = {
+        "Desayuno": [
+            ("Tostada jamón", 500),
+            ("Huevos + guacamole", 500),
+            ("Tortitas avena", 500),
+            ("Leche + cereales", 500)
+        ],
+        "Comida": [
+            ("Patata + atún", 850),
+            ("Arroz + pollo", 850),
+            ("Pasta + carne", 850),
+            ("Macarrones + salmón", 850)
+        ],
+        "Cena": [
+            ("Pasta + pollo", 800),
+            ("Merluza + patata", 800),
+            ("Arroz + atún", 800),
+            ("Pavo + quinoa", 800)
+        ]
+    }
 
-    # COMIDA
-    comida = st.selectbox("Comida", [
-        "Patata + atún + huevo (850 kcal)",
-        "Arroz + pollo + verduras (850 kcal)",
-        "Pasta + carne + tomate (850 kcal)",
-        "Macarrones + salmón (850 kcal)"
-    ])
+    total = 0
+    seleccion = {}
 
-    # CENA
-    cena = st.selectbox("Cena", [
-        "Pasta + pollo (800 kcal)",
-        "Merluza + patata (800 kcal)",
-        "Arroz + atún (800 kcal)",
-        "Pavo + quinoa (800 kcal)"
-    ])
+    for comida, opciones in dieta.items():
 
-    total = 500 + 850 + 800
+        nombres = [o[0] for o in opciones]
+        opcion = st.selectbox(comida, nombres)
+
+        kcal = next(o[1] for o in opciones if o[0] == opcion)
+
+        st.write(f"{kcal} kcal")
+
+        seleccion[comida] = opcion
+        total += kcal
 
     st.success(f"🔥 TOTAL: {total} kcal")
 
+    if st.button("💾 Guardar dieta"):
+
+        data["dietas"].append({
+            "fecha": datetime.now().strftime("%Y-%m-%d"),
+            "comidas": seleccion,
+            "kcal": total
+        })
+
+        with open(FILE, "w") as f:
+            json.dump(data, f)
+
+        st.success("Dieta guardada")
+
 # -------- PROGRESO --------
-elif menu == "📊 Progreso":
+elif menu == "📊":
 
-    st.header("📊 Progreso")
+    st.subheader("Progreso")
 
-    if "pesos" not in st.session_state:
-        st.session_state.pesos = []
-
-    peso = st.number_input("Peso actual")
+    peso = st.number_input("Peso")
 
     if st.button("Guardar peso"):
-        st.session_state.pesos.append({
+        data["pesos"].append({
             "fecha": datetime.now().strftime("%Y-%m-%d"),
             "peso": peso
         })
 
-    if st.session_state.pesos:
-        df = pd.DataFrame(st.session_state.pesos)
+        with open(FILE, "w") as f:
+            json.dump(data, f)
+
+    if data["pesos"]:
+        df = pd.DataFrame(data["pesos"])
         st.line_chart(df["peso"])
