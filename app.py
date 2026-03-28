@@ -40,6 +40,12 @@ if not st.session_state.usuario:
 
 usuario = st.session_state.usuario
 
+# -------- ROLES --------
+if "rol" not in st.session_state:
+    st.session_state.rol = "cliente"
+
+rol = st.sidebar.selectbox("Modo", ["cliente", "entrenador"])
+
 # -------- USER --------
 res = supabase.table("usuarios").select("*").eq("nombre", usuario).execute()
 
@@ -62,6 +68,19 @@ menu = st.sidebar.radio("Menú", [
     "📅 Historial",
     "🍽️ Dieta"
 ])
+if rol == "entrenador":
+
+    st.header("👥 Clientes")
+
+    res = supabase.table("usuarios").select("*").execute()
+
+    nombres = [u["nombre"] for u in res.data]
+
+    cliente = st.selectbox("Selecciona cliente", nombres)
+
+    user = next(u for u in res.data if u["nombre"] == cliente)
+
+    st.write(f"Viendo a: {cliente}")
 
 # -------- ENTRENAMIENTO --------
 if menu == "🏋️ Entreno":
