@@ -17,12 +17,13 @@ if not os.path.exists(FILE):
 with open(FILE, "r") as f:
     data = json.load(f)
 
+# -------- UI --------
 st.markdown("## 💪 APOLLO")
 
-menu = st.radio("", ["🏋️", "🍽️", "📊"], horizontal=True)
+menu = st.radio("", ["🏋️ Entreno", "🍽️ Dieta", "📊 Progreso"], horizontal=True)
 
 # ---------------- ENTRENAMIENTO ----------------
-if menu == "🏋️":
+if menu == "🏋️ Entreno":
 
     dia = st.selectbox("Día", ["Día 1", "Día 2", "Día 3", "Día 4"])
 
@@ -82,7 +83,6 @@ if menu == "🏋️":
             "peso": peso
         })
 
-    # TIMER
     if st.session_state.timer > 0:
         timer.markdown(f"## ⏳ {st.session_state.timer}s")
         time.sleep(1)
@@ -103,39 +103,22 @@ if menu == "🏋️":
         st.success("Entreno guardado 🔥")
 
 # ---------------- DIETA ----------------
-elif menu == "🍽️":
+elif menu == "🍽️ Dieta":
 
     st.subheader("Dieta (2150 kcal)")
 
     dieta = {
-        "Desayuno": [
-            ("Tostada + jamón + fruta", 500),
-            ("Huevos + guacamole", 500),
-            ("Tortitas avena", 500),
-            ("Leche + cereales", 500),
-        ],
-        "Comida": [
-            ("Patata + atún", 850),
-            ("Arroz + pollo", 850),
-            ("Pasta + carne", 850),
-            ("Macarrones + salmón", 850),
-        ],
-        "Cena": [
-            ("Pasta + pollo", 800),
-            ("Merluza + patata", 800),
-            ("Arroz + atún", 800),
-            ("Pavo + quinoa", 800),
-        ]
+        "Desayuno": [("Opción", 500)],
+        "Comida": [("Opción", 850)],
+        "Cena": [("Opción", 800)]
     }
 
     total = 0
 
     for comida, opciones in dieta.items():
 
-        nombres = [o[0] for o in opciones]
-        opcion = st.selectbox(comida, nombres)
-
-        kcal = next(o[1] for o in opciones if o[0] == opcion)
+        opcion = st.selectbox(comida, [o[0] for o in opciones])
+        kcal = opciones[0][1]
 
         st.write(f"{kcal} kcal")
         total += kcal
@@ -155,40 +138,55 @@ elif menu == "🍽️":
         st.success("Dieta guardada")
 
 # ---------------- PROGRESO ----------------
-elif menu == "📊":
+elif menu == "📊 Progreso":
 
-    st.subheader("Progreso")
+    st.subheader("📊 Progreso")
 
-    if data["entrenos"]:
+    # -------- PESO CORPORAL --------
+    st.markdown("### ⚖️ Peso corporal")
 
-        registros = []
+    peso = st.number_input("Tu peso")
 
-        for entreno in data["entrenos"]:
+    if st.button("Guardar peso"):
+        data["pesos"].append({
+            "fecha": datetime.now().strftime("%Y-%m-%d"),
+            "peso": peso
+        })
 
-            if "ejercicios" not in entreno:
-                continue  # 🔥 ignora datos antiguos
+        with open(FILE, "w") as f:
+            json.dump(data, f)
 
-            fecha = entreno["fecha"]
+    if data["pesos"]:
+        df_peso = pd.DataFrame(data["pesos"])
+        st.line_chart(df_peso.set_index("fecha")["peso"])
 
-            for ej in entreno["ejercicios"]:
-                registros.append({
-                    "fecha": fecha,
-                    "ejercicio": ej["ejercicio"],
-                    "peso": ej["peso"]
-                })
+    st.markdown("---")
 
-        if registros:
+    # -------- PROGRESO EJERCICIOS --------
+    st.markdown("### 🏋️ Progreso ejercicios")
 
-            df = pd.DataFrame(registros)
+    registros = []
 
-            ejercicio = st.selectbox("Ejercicio", df["ejercicio"].unique())
+    for entreno in data["entrenos"]:
 
-            df_filtrado = df[df["ejercicio"] == ejercicio]
+        if "ejercicios" not in entreno:
+            continue
 
-            st.line_chart(df_filtrado.set_index("fecha")["peso"])
+        for ej in entreno["ejercicios"]:
+            registros.append({
+                "fecha": entreno["fecha"],
+                "ejercicio": ej["ejercicio"],
+                "peso": ej["peso"]
+            })
 
-        else:
-            st.info("No hay datos válidos aún")
+    if registros:
+        df = pd.DataFrame(registros)
+
+        ejercicio = st.selectbox("Ejercicio", df["ejercicio"].unique())
+
+        df_filtrado = df[df["ejercicio"] == ejercicio]
+
+        st.line_chart(df_filtrado.set_index("fecha")["peso"])
 
     else:
-        st.info("No hay datos aún")
+        st.info("Sin datos aún")
