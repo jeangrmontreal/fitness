@@ -17,7 +17,6 @@ if not os.path.exists(FILE):
 with open(FILE, "r") as f:
     data = json.load(f)
 
-# -------- UI --------
 st.markdown("## 💪 APOLLO")
 
 menu = st.radio("", ["🏋️ Entreno", "🍽️ Dieta", "📊 Progreso"], horizontal=True)
@@ -105,37 +104,59 @@ if menu == "🏋️ Entreno":
 # ---------------- DIETA ----------------
 elif menu == "🍽️ Dieta":
 
-    st.subheader("Dieta (2150 kcal)")
+    st.subheader("🍽️ Dieta (2150 kcal)")
 
     dieta = {
-        "Desayuno": [("Opción", 500)],
-        "Comida": [("Opción", 850)],
-        "Cena": [("Opción", 800)]
+        "Desayuno": [
+            ("Tostada de pan integral, jamón serrano, tomate y aceite + fruta", 500),
+            ("Pan integral + huevos revueltos + guacamole + fruta", 500),
+            ("Tortitas de avena con chocolate y fresas", 500),
+            ("Leche con corn flakes + cacao + fruta", 500),
+        ],
+        "Comida": [
+            ("Patata + atún + huevo + pimiento", 850),
+            ("Arroz + pollo + champiñones", 850),
+            ("Espaguetis + carne + tomate", 850),
+            ("Macarrones + salmón + verduras", 850),
+        ],
+        "Cena": [
+            ("Pasta + pollo + verduras", 800),
+            ("Merluza + puré de patatas", 800),
+            ("Arroz + atún + verduras", 800),
+            ("Pavo + quinoa + judías", 800),
+        ]
     }
 
     total = 0
+    seleccion = {}
 
     for comida, opciones in dieta.items():
 
-        opcion = st.selectbox(comida, [o[0] for o in opciones])
-        kcal = opciones[0][1]
+        nombres = [o[0] for o in opciones]
+        opcion = st.selectbox(comida, nombres, key=comida)
 
-        st.write(f"{kcal} kcal")
+        kcal = next(o[1] for o in opciones if o[0] == opcion)
+
+        st.write(f"🔥 {kcal} kcal")
+
+        seleccion[comida] = opcion
         total += kcal
 
+    st.markdown("---")
     st.success(f"🔥 TOTAL: {total} kcal")
 
     if st.button("💾 Guardar dieta"):
 
         data["dietas"].append({
             "fecha": datetime.now().strftime("%Y-%m-%d"),
+            "comidas": seleccion,
             "kcal": total
         })
 
         with open(FILE, "w") as f:
             json.dump(data, f)
 
-        st.success("Dieta guardada")
+        st.success("Dieta guardada ✅")
 
 # ---------------- PROGRESO ----------------
 elif menu == "📊 Progreso":
