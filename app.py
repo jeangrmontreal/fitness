@@ -1,4 +1,14 @@
 import streamlit as st
+from supabase import create_client
 
-st.title("🔥 APOLLO LIMPIO 🔥")
-st.write("Ahora sí funciona")
+st.title("🚀 APOLLO v1")
+
+SUPABASE_URL = "https://obhfwfkfeyfoiyuwczbe.supabase.co"
+SUPABASE_KEY = "PEGA_TU_KEY_AQUI"
+
+# conectar
+try:
+    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+    st.success("✅ Conectado a Supabase")
+except:
+    st.error("❌ Error conexión")
