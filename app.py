@@ -10,24 +10,19 @@ st.set_page_config(page_title="APOLLO", layout="centered")
 # -------- ESTILO PREMIUM --------
 st.markdown("""
 <style>
-body {
-    background-color: #0e1117;
-    color: white;
-}
+body {background-color: #0e1117; color: white;}
 .stButton>button {
     width: 100%;
     border-radius: 12px;
-    height: 45px;
-    font-size: 16px;
-}
-.stNumberInput input {
-    border-radius: 10px;
+    height: 55px;
+    font-size: 14px;
 }
 </style>
 """, unsafe_allow_html=True)
 
 FILE = "data.json"
 
+# -------- CREAR ARCHIVO --------
 if not os.path.exists(FILE):
     with open(FILE, "w") as f:
         json.dump({"entrenos": [], "dietas": [], "pesos": []}, f)
@@ -95,7 +90,7 @@ if menu == "🏋️":
         col1, col2 = st.columns([2,1])
 
         with col1:
-            peso = st.number_input("Peso (kg)", 0.0, step=2.5, key=f"p{i}")
+            peso = st.number_input("Peso", 0.0, step=2.5, key=f"p{i}")
         with col2:
             if st.button("⏱️", key=f"t{i}"):
                 st.session_state.timer = 60
@@ -153,24 +148,40 @@ elif menu == "🍽️":
     }
 
     total = 0
+    seleccion = {}
 
     for comida, opciones in dieta.items():
 
-        st.markdown(f"**{comida}**")
+        st.markdown(f"#### {comida}")
 
-        opcion = st.selectbox("", [o[0] for o in opciones], key=comida)
-        kcal = next(o[1] for o in opciones if o[0] == opcion)
+        cols = st.columns(2)
 
-        st.caption(f"{kcal} kcal")
-        total += kcal
+        opcion_elegida = None
 
-    st.markdown("---")
+        for i, (nombre, kcal) in enumerate(opciones):
+
+            if cols[i % 2].button(f"{nombre}\n🔥 {kcal} kcal", key=f"{comida}{i}"):
+                opcion_elegida = (nombre, kcal)
+
+        if opcion_elegida:
+            st.session_state[comida] = opcion_elegida
+
+        if comida in st.session_state:
+            nombre, kcal = st.session_state[comida]
+            st.success(f"{nombre} → {kcal} kcal")
+
+            seleccion[comida] = nombre
+            total += kcal
+
+        st.markdown("---")
+
     st.success(f"🔥 TOTAL: {total} kcal")
 
     if st.button("💾 Guardar dieta"):
 
         data["dietas"].append({
             "fecha": datetime.now().strftime("%Y-%m-%d"),
+            "comidas": seleccion,
             "kcal": total
         })
 
@@ -184,8 +195,8 @@ elif menu == "📊":
 
     st.markdown("### 📊 Progreso")
 
-    # Peso corporal
-    st.markdown("#### ⚖️ Peso")
+    # PESO CORPORAL
+    st.markdown("#### ⚖️ Peso corporal")
 
     peso = st.number_input("Peso actual")
 
@@ -204,7 +215,7 @@ elif menu == "📊":
 
     st.markdown("---")
 
-    # Ejercicios
+    # PROGRESO EJERCICIOS
     st.markdown("#### 🏋️ Progreso gym")
 
     registros = []
