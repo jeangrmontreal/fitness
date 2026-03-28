@@ -7,16 +7,52 @@ import os
 
 st.set_page_config(page_title="APOLLO", layout="centered")
 
-# -------- ESTILO PREMIUM --------
+# -------- ESTILO OLIVA PREMIUM --------
 st.markdown("""
 <style>
-body {background-color: #0e1117; color: white;}
+body {background-color: #0c0f0a; color: #e5e7eb;}
+
+h1, h2, h3 {color: #d1d5db;}
+
 .stButton>button {
     width: 100%;
-    border-radius: 12px;
+    border-radius: 18px;
     height: 55px;
-    font-size: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #556b2f, #6b8e23);
+    color: white;
+    border: none;
 }
+
+.stButton>button:hover {
+    background: linear-gradient(135deg, #6b8e23, #556b2f);
+}
+
+.stNumberInput input {
+    border-radius: 12px;
+    background-color: #1a1f14;
+    color: white;
+    border: 1px solid #556b2f;
+}
+
+div[data-baseweb="select"] {
+    background-color: #1a1f14;
+    border-radius: 12px;
+    border: 1px solid #556b2f;
+}
+
+hr {
+    border: 0;
+    height: 1px;
+    background: #2f3e1f;
+}
+
+.block-container {
+    padding-top: 1rem;
+}
+
+p, span {color: #cbd5e1;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -155,7 +191,6 @@ elif menu == "🍽️":
         st.markdown(f"#### {comida}")
 
         cols = st.columns(2)
-
         opcion_elegida = None
 
         for i, (nombre, kcal) in enumerate(opciones):
@@ -195,7 +230,7 @@ elif menu == "📊":
 
     st.markdown("### 📊 Progreso")
 
-    # -------- PESO CORPORAL --------
+    # PESO
     st.markdown("#### ⚖️ Peso corporal")
 
     peso = st.number_input("Peso actual")
@@ -215,7 +250,7 @@ elif menu == "📊":
 
     st.markdown("---")
 
-    # -------- PROGRESO EJERCICIOS --------
+    # GYM
     st.markdown("#### 🏋️ Progreso gym")
 
     registros = []
@@ -240,22 +275,16 @@ elif menu == "📊":
 
         st.line_chart(df_filtrado.set_index("fecha")["peso"])
 
-    else:
-        st.info("Sin datos aún")
-
     st.markdown("---")
 
-    # -------- HISTORIAL DIETA --------
+    # DIETA HISTORIAL
     st.markdown("#### 🍽️ Historial dieta")
 
     if data["dietas"]:
 
         df_dieta = pd.DataFrame(data["dietas"])
 
-        # gráfico kcal
         st.line_chart(df_dieta.set_index("fecha")["kcal"])
-
-        st.markdown("### 📋 Detalle")
 
         for d in reversed(data["dietas"]):
 
@@ -267,6 +296,3 @@ elif menu == "📊":
                     st.write(f"- {comida}: {opcion}")
 
             st.markdown("---")
-
-    else:
-        st.info("No hay dietas guardadas aún")
