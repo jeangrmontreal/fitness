@@ -7,7 +7,6 @@ import os
 
 st.set_page_config(page_title="APOLLO", layout="centered")
 
-# -------- FILE STORAGE --------
 FILE = "data.json"
 
 if not os.path.exists(FILE):
@@ -17,106 +16,112 @@ if not os.path.exists(FILE):
 with open(FILE, "r") as f:
     data = json.load(f)
 
-# -------- UI --------
 st.markdown("## 💪 APOLLO")
 
 menu = st.radio("", ["🏋️", "🍽️", "📊"], horizontal=True)
 
-# -------- ENTRENAMIENTO --------
+# ---------------- ENTRENAMIENTO ----------------
 if menu == "🏋️":
 
-    st.subheader("Entreno")
+    dia = st.selectbox("Día", ["Día 1", "Día 2", "Día 3", "Día 4"])
 
     rutina = {
-        "Pecho": [
-            "Press inclinado en Smith",
-            "Press convergente",
-            "Aperturas en contractora"
+        "Día 1": [
+            ("Press inclinado Smith", "3x6-8"),
+            ("Press convergente", "3x10-12"),
+            ("Aperturas contractora", "3x10-12"),
+            ("Elevaciones laterales", "4x12-15"),
+            ("Fondos tríceps", "4x8-12"),
         ],
-        "Hombro": [
-            "Elevaciones laterales"
+        "Día 2": [
+            ("Remo barra", "4x12/10/10/8"),
+            ("Dominadas", "4x6-8"),
+            ("Remo mancuerna", "3x12/10/8"),
+            ("Remo inclinado", "3x10-12"),
+            ("Pájaros", "3x10-12"),
+            ("Curl predicador", "3x10-12"),
+            ("Curl martillo", "2x10-8"),
         ],
-        "Tríceps": [
-            "Fondos en paralelas"
+        "Día 3": [
+            ("Sentadilla", "2x6 + 3x10"),
+            ("Prensa", "3x8-10"),
+            ("Curl femoral", "3x10"),
+            ("Extensión cuádriceps", "3x10"),
+            ("Peso muerto rumano", "3x10-12"),
+            ("Gemelo Smith", "4x10-15"),
+        ],
+        "Día 4": [
+            ("Press inclinado Smith", "3x8/6/6"),
+            ("Aperturas", "3x10-12"),
+            ("Press máquina", "3x10-12"),
+            ("Press militar", "2x8"),
+            ("Laterales", "3x10-12"),
+            ("Skull crushers", "4x8-10"),
+            ("Press cerrado", "4x8-10"),
         ]
     }
 
     if "timer" not in st.session_state:
         st.session_state.timer = 0
 
-    timer_box = st.empty()
-
+    timer = st.empty()
     registro = []
 
-    for grupo, ejercicios in rutina.items():
+    for i, (ej, info) in enumerate(rutina[dia]):
 
-        st.markdown(f"### {grupo}")
+        st.markdown(f"**{ej} ({info})**")
 
-        for i, ej in enumerate(ejercicios):
+        peso = st.number_input("Kg", 0.0, step=2.5, key=f"p{i}")
 
-            st.write(f"➡️ {ej}")
+        if st.button("⏱️", key=f"t{i}"):
+            st.session_state.timer = 30
 
-            col1, col2, col3 = st.columns(3)
-
-            with col1:
-                series = st.number_input("S", 1, 10, 3, key=f"s{grupo}{i}")
-            with col2:
-                reps = st.number_input("R", 1, 20, 10, key=f"r{grupo}{i}")
-            with col3:
-                peso = st.number_input("Kg", 0.0, step=2.5, key=f"p{grupo}{i}")
-
-            if st.button("⏱️", key=f"t{grupo}{i}"):
-                st.session_state.timer = 30
-
-            registro.append({
-                "grupo": grupo,
-                "ejercicio": ej,
-                "series": series,
-                "reps": reps,
-                "peso": peso
-            })
+        registro.append({
+            "ejercicio": ej,
+            "peso": peso
+        })
 
     if st.session_state.timer > 0:
-        timer_box.markdown(f"## ⏳ {st.session_state.timer}s")
+        timer.markdown(f"## ⏳ {st.session_state.timer}s")
         time.sleep(1)
         st.session_state.timer -= 1
         st.rerun()
 
     if st.button("💾 Guardar entreno"):
-
         data["entrenos"].append({
             "fecha": datetime.now().strftime("%Y-%m-%d"),
+            "dia": dia,
             "data": registro
         })
 
         with open(FILE, "w") as f:
             json.dump(data, f)
 
-        st.success("Guardado 🔥")
+        st.success("Entreno guardado 🔥")
 
-# -------- DIETA --------
+# ---------------- DIETA ----------------
 elif menu == "🍽️":
 
-    st.subheader("Dieta")
+    st.subheader("Dieta (2150 kcal)")
 
     dieta = {
         "Desayuno": [
-            ("Tostada jamón", 500),
-            ("Huevos + guacamole", 500),
-            ("Tortitas avena", 500),
-            ("Leche + cereales", 500)
+            ("Tostada + jamón + fruta", "Pan 100g, jamón 50g...", 500),
+            ("Huevos + guacamole", "Huevo 100g, guacamole 20g...", 500),
+            ("Tortitas avena", "Avena 50g, huevo, plátano...", 500),
+            ("Leche + cereales", "Leche 300g, corn flakes...", 500),
         ],
         "Comida": [
-            ("Patata + atún", 850),
-            ("Arroz + pollo", 850),
-            ("Pasta + carne", 850),
-            ("Macarrones + salmón", 850)
+            ("Patata + atún", "Patata 300g, atún...", 850),
+            ("Arroz + pollo", "Arroz 85g, pollo 150g...", 850),
+            ("Pasta + carne", "Espaguetis 100g...", 850),
+            ("Macarrones + salmón", "Salmón 220g...", 850),
         ],
         "Cena": [
-            ("Pasta + pollo", 800),
-            ("Merluza + patata", 800),
-            ("Arroz + atún", 800),
-            ("Pavo + quinoa", 800)
+            ("Pasta + pollo", "Macarrones 120g...", 800),
+            ("Merluza + patata", "Patata 300g...", 800),
+            ("Arroz + atún", "Arroz 120g...", 800),
+            ("Pavo + quinoa", "Quinoa 120g...", 800),
         ]
     }
 
@@ -128,20 +133,20 @@ elif menu == "🍽️":
         nombres = [o[0] for o in opciones]
         opcion = st.selectbox(comida, nombres)
 
-        kcal = next(o[1] for o in opciones if o[0] == opcion)
+        detalle = next(o for o in opciones if o[0] == opcion)
 
-        st.write(f"{kcal} kcal")
+        st.caption(detalle[1])
+        st.write(f"{detalle[2]} kcal")
 
         seleccion[comida] = opcion
-        total += kcal
+        total += detalle[2]
 
     st.success(f"🔥 TOTAL: {total} kcal")
 
     if st.button("💾 Guardar dieta"):
-
         data["dietas"].append({
             "fecha": datetime.now().strftime("%Y-%m-%d"),
-            "comidas": seleccion,
+            "data": seleccion,
             "kcal": total
         })
 
@@ -150,10 +155,8 @@ elif menu == "🍽️":
 
         st.success("Dieta guardada")
 
-# -------- PROGRESO --------
+# ---------------- PROGRESO ----------------
 elif menu == "📊":
-
-    st.subheader("Progreso")
 
     peso = st.number_input("Peso")
 
