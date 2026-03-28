@@ -12,9 +12,16 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 st.set_page_config(page_title="APOLLO PRO", layout="centered")
 
+# -------- DARK MODE --------
+st.markdown("""
+<style>
+body {background-color: #0e1117; color: white;}
+</style>
+""", unsafe_allow_html=True)
+
 st.title("🚀 APOLLO PRO")
 
-# -------- TIMER GLOBAL --------
+# -------- TIMER --------
 if "timer" not in st.session_state:
     st.session_state.timer = 0
 
@@ -25,7 +32,7 @@ if "usuario" not in st.session_state:
     st.session_state.usuario = ""
 
 if not st.session_state.usuario:
-    nombre = st.text_input("👤 Tu nombre")
+    nombre = st.text_input("👤 Nombre")
     if st.button("Entrar"):
         st.session_state.usuario = nombre.strip()
         st.rerun()
@@ -78,18 +85,16 @@ if menu == "🏋️ Entreno":
 
         peso = st.number_input(f"Peso {ej}", 0.0, step=2.5, key=f"p{i}")
 
-        # TIMER FIJO
         if st.button(f"⏱️ Descanso {ej}", key=f"t{i}"):
             st.session_state.timer = 30
 
         registro.append({
             "ejercicio": ej,
-            "peso": peso,
+            "peso": float(peso),
             "series": series,
             "reps": reps
         })
 
-    # mostrar timer fijo arriba
     if st.session_state.timer > 0:
         timer_placeholder.markdown(f"## ⏳ {st.session_state.timer}s")
         time.sleep(1)
@@ -144,10 +149,8 @@ elif menu == "📊 Progreso":
             st.line_chart(df_f["peso"])
         else:
             st.info("Sin entrenos")
-    else:
-        st.info("Sin datos")
 
-# -------- DIETA --------
+# -------- DIETA (FIX TOTAL) --------
 elif menu == "🍽️ Dieta":
 
     st.header("🍽️ Dieta diaria")
@@ -180,7 +183,7 @@ elif menu == "🍽️ Dieta":
         st.subheader(comida)
 
         opcion = st.selectbox(comida, list(opciones.keys()), key=comida)
-        calorias = opciones[opcion]
+        calorias = int(opciones[opcion])
 
         st.write(f"🔥 {calorias} kcal")
 
@@ -200,15 +203,17 @@ elif menu == "🍽️ Dieta":
         if not isinstance(historial, list):
             historial = []
 
-        historial.append({
+        registro_dieta = {
             "fecha": datetime.now().strftime("%Y-%m-%d"),
             "tipo": "dieta",
-            "data": seleccion,
-            "total_kcal": total_calorias
-        })
+            "comidas": seleccion,
+            "total_kcal": int(total_calorias)
+        }
+
+        historial.append(registro_dieta)
 
         supabase.table("usuarios").update({
             "historial": historial
         }).eq("id", user["id"]).execute()
 
-        st.success("✅ Dieta guardada")
+        st.success("✅ Dieta guardada PERFECTA")
