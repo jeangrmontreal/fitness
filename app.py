@@ -9,6 +9,7 @@ st.set_page_config(page_title="APOLLO", layout="centered")
 
 FILE = "data.json"
 
+# -------- CREAR ARCHIVO SI NO EXISTE --------
 if not os.path.exists(FILE):
     with open(FILE, "w") as f:
         json.dump({"entrenos": [], "dietas": [], "pesos": []}, f)
@@ -74,7 +75,7 @@ if menu == "🏋️":
         peso = st.number_input("Kg", 0.0, step=2.5, key=f"p{i}")
 
         if st.button("⏱️", key=f"t{i}"):
-            st.session_state.timer = 60  # 🔥 ahora 60s
+            st.session_state.timer = 60
 
         registro.append({
             "ejercicio": ej,
@@ -88,15 +89,14 @@ if menu == "🏋️":
         st.session_state.timer -= 1
         st.rerun()
 
+    # GUARDAR BIEN (FIX PROGRESO)
     if st.button("💾 Guardar entreno"):
 
-        for r in registro:
-            data["entrenos"].append({
-                "fecha": datetime.now().strftime("%Y-%m-%d"),
-                "dia": dia,
-                "ejercicio": r["ejercicio"],
-                "peso": r["peso"]
-            })
+        data["entrenos"].append({
+            "fecha": datetime.now().strftime("%Y-%m-%d"),
+            "dia": dia,
+            "ejercicios": registro
+        })
 
         with open(FILE, "w") as f:
             json.dump(data, f)
@@ -162,13 +162,25 @@ elif menu == "📊":
 
     if data["entrenos"]:
 
-        df = pd.DataFrame(data["entrenos"])
+        registros = []
+
+        for entreno in data["entrenos"]:
+            fecha = entreno["fecha"]
+
+            for ej in entreno["ejercicios"]:
+                registros.append({
+                    "fecha": fecha,
+                    "ejercicio": ej["ejercicio"],
+                    "peso": ej["peso"]
+                })
+
+        df = pd.DataFrame(registros)
 
         ejercicio = st.selectbox("Ejercicio", df["ejercicio"].unique())
 
         df_filtrado = df[df["ejercicio"] == ejercicio]
 
-        st.line_chart(df_filtrado["peso"])
+        st.line_chart(df_filtrado.set_index("fecha")["peso"])
 
     else:
         st.info("No hay datos aún")
