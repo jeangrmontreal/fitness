@@ -7,7 +7,7 @@ import os
 
 st.set_page_config(page_title="APOLLO", layout="centered")
 
-# -------- ESTILO OLIVA PREMIUM --------
+# -------- ESTILO OLIVA --------
 st.markdown("""
 <style>
 body {background-color: #0c0f0a; color: #e5e7eb;}
@@ -102,10 +102,7 @@ if menu == "🏋️":
             if st.button("⏱️", key=f"t{i}"):
                 st.session_state.timer = 60
 
-        registro.append({
-            "ejercicio": ej,
-            "peso": peso
-        })
+        registro.append({"ejercicio": ej, "peso": peso})
 
         st.markdown("---")
 
@@ -128,40 +125,58 @@ if menu == "🏋️":
 # ---------------- DIETA ----------------
 elif menu == "🍽️":
 
-    st.markdown("### 🍽️ Dieta")
+    st.markdown("### 🍽️ Dieta (2150 kcal)")
 
     dieta = {
         "Desayuno": [
-            ("Tostada + jamón + fruta", 500),
-            ("Huevos + guacamole", 500),
-            ("Tortitas avena", 500),
-            ("Leche + cereales", 500),
+            ("Tostada integral + jamón + tomate + aceite + fruta", 
+             "Pan 100g, jamón 50g, tomate 50g, aceite 8ml + fruta", 500),
+            ("Pan + huevos + guacamole + fruta",
+             "Pan 100g, huevo 100g, guacamole 20g + fruta", 500),
+            ("Tortitas avena + chocolate + fresas",
+             "Avena 50g, huevo, claras, plátano, fresas, chocolate", 500),
+            ("Leche + corn flakes + cacao + fruta",
+             "Leche 300g, corn flakes 50g, cacao 10g + fruta", 500),
         ],
         "Comida": [
-            ("Patata + atún", 850),
-            ("Arroz + pollo", 850),
-            ("Pasta + carne", 850),
-            ("Macarrones + salmón", 850),
+            ("Patata + atún + huevo + pimiento",
+             "Patata 300g, atún 160g, huevo 120g, pimiento 50g", 850),
+            ("Arroz + pollo + champiñones",
+             "Arroz 85g, pollo 150g, champiñones, tomate", 850),
+            ("Espaguetis + carne + tomate",
+             "Pasta 100g, carne 200g, tomate", 850),
+            ("Macarrones + salmón + verduras",
+             "Macarrones 100g, salmón 220g, verduras", 850),
         ],
         "Cena": [
-            ("Pasta + pollo", 800),
-            ("Merluza + patata", 800),
-            ("Arroz + atún", 800),
-            ("Pavo + quinoa", 800),
+            ("Pasta + pollo + verduras",
+             "Macarrones 120g, pollo 200g, verduras", 800),
+            ("Merluza + puré de patata",
+             "Patata 300g, merluza 200g", 800),
+            ("Arroz + atún + verduras",
+             "Arroz 120g, atún 160g, verduras", 800),
+            ("Pavo + quinoa + judías",
+             "Quinoa 120g, pavo 200g, judías", 800),
         ]
     }
 
     total = 0
+    seleccion = {}
 
     for comida, opciones in dieta.items():
 
         st.markdown(f"#### {comida}")
 
-        opcion = st.selectbox(comida, [o[0] for o in opciones], key=comida)
-        kcal = next(o[1] for o in opciones if o[0] == opcion)
+        nombres = [o[0] for o in opciones]
+        opcion = st.selectbox(comida, nombres, key=comida)
 
-        st.write(f"🔥 {kcal} kcal")
-        total += kcal
+        detalle = next(o for o in opciones if o[0] == opcion)
+
+        st.caption(detalle[1])
+        st.write(f"🔥 {detalle[2]} kcal")
+
+        seleccion[comida] = opcion
+        total += detalle[2]
 
         st.markdown("---")
 
@@ -170,6 +185,7 @@ elif menu == "🍽️":
     if st.button("💾 Guardar dieta"):
         data["dietas"].append({
             "fecha": datetime.now().strftime("%Y-%m-%d"),
+            "comidas": seleccion,
             "kcal": total
         })
         with open(FILE, "w") as f:
@@ -181,8 +197,7 @@ elif menu == "📊":
 
     st.markdown("### 📊 Progreso")
 
-    st.markdown("#### ⚖️ Peso corporal")
-
+    # PESO
     peso = st.number_input("Peso actual")
 
     if st.button("Guardar peso"):
@@ -194,27 +209,21 @@ elif menu == "📊":
             json.dump(data, f)
 
     if data["pesos"]:
-        df_peso = pd.DataFrame(data["pesos"])
-        st.line_chart(df_peso.set_index("fecha")["peso"])
+        df = pd.DataFrame(data["pesos"])
+        st.line_chart(df.set_index("fecha")["peso"])
 
     st.markdown("---")
 
-    st.markdown("#### 🏋️ Progreso gym")
+    # HISTORIAL DIETA
+    st.markdown("### 🍽️ Historial dieta")
 
-    registros = []
+    if data["dietas"]:
+        df_dieta = pd.DataFrame(data["dietas"])
+        st.line_chart(df_dieta.set_index("fecha")["kcal"])
 
-    for entreno in data["entrenos"]:
-        if "ejercicios" not in entreno:
-            continue
-        for ej in entreno["ejercicios"]:
-            registros.append({
-                "fecha": entreno["fecha"],
-                "ejercicio": ej["ejercicio"],
-                "peso": ej["peso"]
-            })
-
-    if registros:
-        df = pd.DataFrame(registros)
-        ejercicio = st.selectbox("Ejercicio", df["ejercicio"].unique())
-        df_filtrado = df[df["ejercicio"] == ejercicio]
-        st.line_chart(df_filtrado.set_index("fecha")["peso"])
+        for d in reversed(data["dietas"]):
+            st.markdown(f"**📅 {d['fecha']}**")
+            st.write(f"🔥 {d['kcal']} kcal")
+            for comida, opcion in d["comidas"].items():
+                st.write(f"- {comida}: {opcion}")
+            st.markdown("---")
