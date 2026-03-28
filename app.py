@@ -14,6 +14,12 @@ st.set_page_config(page_title="APOLLO PRO", layout="centered")
 
 st.title("🚀 APOLLO PRO")
 
+# -------- TIMER GLOBAL --------
+if "timer" not in st.session_state:
+    st.session_state.timer = 0
+
+timer_placeholder = st.empty()
+
 # -------- LOGIN --------
 if "usuario" not in st.session_state:
     st.session_state.usuario = ""
@@ -72,10 +78,9 @@ if menu == "🏋️ Entreno":
 
         peso = st.number_input(f"Peso {ej}", 0.0, step=2.5, key=f"p{i}")
 
+        # TIMER FIJO
         if st.button(f"⏱️ Descanso {ej}", key=f"t{i}"):
-            for t in range(30, 0, -1):
-                st.write(f"⏳ {t}s")
-                time.sleep(1)
+            st.session_state.timer = 30
 
         registro.append({
             "ejercicio": ej,
@@ -83,6 +88,13 @@ if menu == "🏋️ Entreno":
             "series": series,
             "reps": reps
         })
+
+    # mostrar timer fijo arriba
+    if st.session_state.timer > 0:
+        timer_placeholder.markdown(f"## ⏳ {st.session_state.timer}s")
+        time.sleep(1)
+        st.session_state.timer -= 1
+        st.rerun()
 
     if st.button("💾 Guardar entreno"):
 
@@ -92,6 +104,7 @@ if menu == "🏋️ Entreno":
 
         for r in registro:
             r["fecha"] = datetime.now().strftime("%Y-%m-%d")
+            r["tipo"] = "entreno"
             historial.append(r)
 
         supabase.table("usuarios").update({
@@ -122,25 +135,80 @@ elif menu == "📊 Progreso":
 
     if historial:
         df = pd.DataFrame(historial)
-        ejercicio = st.selectbox("Ejercicio", df["ejercicio"].unique())
-        df_f = df[df["ejercicio"] == ejercicio]
+        df = df[df["tipo"] == "entreno"]
 
-        st.line_chart(df_f["peso"])
+        if not df.empty:
+            ejercicio = st.selectbox("Ejercicio", df["ejercicio"].unique())
+            df_f = df[df["ejercicio"] == ejercicio]
+
+            st.line_chart(df_f["peso"])
+        else:
+            st.info("Sin entrenos")
     else:
-        st.info("No hay datos")
+        st.info("Sin datos")
 
 # -------- DIETA --------
 elif menu == "🍽️ Dieta":
 
-    st.header("🍽️ Dieta")
+    st.header("🍽️ Dieta diaria")
 
-    st.subheader("Desayuno (500 kcal)")
-    st.write("Pan 100g | Jamón 50g | Tomate | Aceite | Fruta")
+    dieta = {
+        "Desayuno": {
+            "Tostada jamón": 500,
+            "Huevos + guacamole": 500,
+            "Tortitas avena": 500,
+            "Leche + cereales": 500
+        },
+        "Comida": {
+            "Patata + atún": 850,
+            "Arroz + pollo": 850,
+            "Pasta + carne": 850,
+            "Macarrones + salmón": 850
+        },
+        "Cena": {
+            "Pasta + pollo": 800,
+            "Merluza + patata": 800,
+            "Arroz + atún": 800,
+            "Pavo + quinoa": 800
+        }
+    }
 
-    st.subheader("Comida (850 kcal)")
-    st.write("Arroz 85g | Pollo 150g | Verduras")
+    total_calorias = 0
+    seleccion = {}
 
-    st.subheader("Cena (800 kcal)")
-    st.write("Pasta 120g | Pollo 200g")
+    for comida, opciones in dieta.items():
+        st.subheader(comida)
 
-    st.success("🔥 Total: 2150 kcal")
+        opcion = st.selectbox(comida, list(opciones.keys()), key=comida)
+        calorias = opciones[opcion]
+
+        st.write(f"🔥 {calorias} kcal")
+
+        seleccion[comida] = {
+            "opcion": opcion,
+            "calorias": calorias
+        }
+
+        total_calorias += calorias
+
+    st.markdown("---")
+    st.success(f"🔥 TOTAL: {total_calorias} kcal")
+
+    if st.button("💾 Guardar dieta"):
+
+        historial = user.get("historial")
+        if not isinstance(historial, list):
+            historial = []
+
+        historial.append({
+            "fecha": datetime.now().strftime("%Y-%m-%d"),
+            "tipo": "dieta",
+            "data": seleccion,
+            "total_kcal": total_calorias
+        })
+
+        supabase.table("usuarios").update({
+            "historial": historial
+        }).eq("id", user["id"]).execute()
+
+        st.success("✅ Dieta guardada")
