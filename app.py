@@ -1,8 +1,9 @@
 import streamlit as st
 from supabase import create_client
 from datetime import datetime
+import pandas as pd
 
-st.title("🚀 APOLLO v5")
+st.title("🚀 APOLLO v6")
 
 SUPABASE_URL = "https://obhfwfkfeyfoiyuwczbe.supabase.co"
 SUPABASE_KEY = "sb_publishable__6hcsOxp7_6blIRz-nOphQ_8RZCKW2d"
@@ -24,7 +25,7 @@ if not st.session_state.usuario:
 
 usuario = st.session_state.usuario
 
-# -------- BUSCAR USUARIO --------
+# -------- USUARIO --------
 res = supabase.table("usuarios").select("*").eq("nombre", usuario).execute()
 
 if not res.data:
@@ -33,7 +34,6 @@ if not res.data:
         "historial": [],
         "pesos": []
     }).execute()
-
     res = supabase.table("usuarios").select("*").eq("nombre", usuario).execute()
 
 user = res.data[0]
@@ -63,13 +63,19 @@ if st.button("💾 Guardar entreno"):
         "series": int(series)
     })
 
-    try:
-        # 🔥 CLAVE: usar ID en vez de nombre
-        supabase.table("usuarios").update({
-            "historial": historial
-        }).eq("id", user["id"]).execute()
+    supabase.table("usuarios").update({
+        "historial": historial
+    }).eq("id", user["id"]).execute()
 
-        st.success("🔥 Entreno guardado")
+    st.success("🔥 Entreno guardado")
 
-    except Exception as e:
-        st.error("❌ Error guardando")
+# -------- HISTORIAL --------
+st.header("📊 Historial")
+
+historial = user.get("historial")
+
+if historial:
+    df = pd.DataFrame(historial)
+    st.dataframe(df)
+else:
+    st.info("No hay entrenos aún")
