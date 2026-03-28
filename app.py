@@ -7,6 +7,21 @@ import os
 
 st.set_page_config(page_title="APOLLO", layout="centered")
 
+# -------- PWA CONFIG --------
+st.markdown("""
+<link rel="manifest" href="static/manifest.json">
+<meta name="theme-color" content="#556b2f">
+<link rel="apple-touch-icon" href="static/icon.png">
+""", unsafe_allow_html=True)
+
+# -------- SPLASH SCREEN --------
+if "loaded" not in st.session_state:
+    st.session_state.loaded = True
+    st.markdown("# 💪 APOLLO")
+    st.markdown("### Cargando...")
+    time.sleep(1.5)
+    st.rerun()
+
 # -------- ESTILO OLIVA --------
 st.markdown("""
 <style>
@@ -185,8 +200,6 @@ elif menu == "🍽️":
     if st.button("💾 Guardar dieta"):
 
         hoy = datetime.now().strftime("%Y-%m-%d")
-
-        # eliminar duplicado del mismo día
         data["dietas"] = [d for d in data["dietas"] if d["fecha"] != hoy]
 
         data["dietas"].append({
