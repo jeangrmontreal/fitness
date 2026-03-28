@@ -12,65 +12,41 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 st.set_page_config(page_title="APOLLO PRO", layout="centered")
 
-# -------- DARK MODE --------
-st.markdown("""
-<style>
-body {background-color: #0e1117; color: white;}
-</style>
-""", unsafe_allow_html=True)
-
 st.title("🚀 APOLLO PRO")
 
-# -------- TIMER --------
-if "timer" not in st.session_state:
-    st.session_state.timer = 0
-
-timer_placeholder = st.empty()
-
-# -------- LOGIN --------
+# -------- LOGIN CON CODIGO --------
 if "usuario" not in st.session_state:
-    st.session_state.usuario = ""
+    st.session_state.usuario = None
+    st.session_state.rol = None
 
 if not st.session_state.usuario:
+
     nombre = st.text_input("👤 Nombre")
+    codigo = st.text_input("🔑 Código acceso", type="password")
+
     if st.button("Entrar"):
-        st.session_state.usuario = nombre.strip()
+
+        if codigo == "apollo123":  # 🔥 código entrenador
+            st.session_state.rol = "entrenador"
+            st.session_state.usuario = "ENTRENADOR"
+        else:
+            st.session_state.rol = "cliente"
+            st.session_state.usuario = nombre.strip()
+
         st.rerun()
+
     st.stop()
 
 usuario = st.session_state.usuario
-
-# -------- ROLES --------
-if "rol" not in st.session_state:
-    st.session_state.rol = "cliente"
-
-rol = st.sidebar.selectbox("Modo", ["cliente", "entrenador"])
-
-# -------- USER --------
-res = supabase.table("usuarios").select("*").eq("nombre", usuario).execute()
-
-if not res.data:
-    supabase.table("usuarios").insert({
-        "nombre": usuario,
-        "historial": [],
-        "pesos": []
-    }).execute()
-    res = supabase.table("usuarios").select("*").eq("nombre", usuario).execute()
-
-user = res.data[0]
+rol = st.session_state.rol
 
 st.sidebar.write(f"👤 {usuario}")
+st.sidebar.write(f"Rol: {rol}")
 
-# -------- MENU --------
-menu = st.sidebar.radio("Menú", [
-    "🏋️ Entreno",
-    "📊 Progreso",
-    "📅 Historial",
-    "🍽️ Dieta"
-])
+# -------- MODO ENTRENADOR --------
 if rol == "entrenador":
 
-    st.header("👥 Clientes")
+    st.header("👥 Panel de clientes")
 
     res = supabase.table("usuarios").select("*").execute()
 
@@ -80,7 +56,30 @@ if rol == "entrenador":
 
     user = next(u for u in res.data if u["nombre"] == cliente)
 
-    st.write(f"Viendo a: {cliente}")
+    st.write(f"📊 Viendo a: {cliente}")
+
+# -------- MODO CLIENTE --------
+else:
+
+    res = supabase.table("usuarios").select("*").eq("nombre", usuario).execute()
+
+    if not res.data:
+        supabase.table("usuarios").insert({
+            "nombre": usuario,
+            "historial": [],
+            "pesos": []
+        }).execute()
+        res = supabase.table("usuarios").select("*").eq("nombre", usuario).execute()
+
+    user = res.data[0]
+
+# -------- MENU --------
+menu = st.sidebar.radio("Menú", [
+    "🏋️ Entreno",
+    "📊 Progreso",
+    "📅 Historial",
+    "🍽️ Dieta"
+])
 
 # -------- ENTRENAMIENTO --------
 if menu == "🏋️ Entreno":
@@ -95,65 +94,20 @@ if menu == "🏋️ Entreno":
         "Fondos en paralelas": (4, "8-12"),
     }
 
-    registro = []
-
-    for i, (ej, (series, reps)) in enumerate(ejercicios.items()):
-
-        st.subheader(ej)
-        st.write(f"Series: {series} | Reps: {reps}")
-
-        peso = st.number_input(f"Peso {ej}", 0.0, step=2.5, key=f"p{i}")
-
-        if st.button(f"⏱️ Descanso {ej}", key=f"t{i}"):
-            st.session_state.timer = 30
-
-        registro.append({
-            "ejercicio": ej,
-            "peso": float(peso),
-            "series": series,
-            "reps": reps
-        })
-
-    if st.session_state.timer > 0:
-        timer_placeholder.markdown(f"## ⏳ {st.session_state.timer}s")
-        time.sleep(1)
-        st.session_state.timer -= 1
-        st.rerun()
-
-    if st.button("💾 Guardar entreno"):
-
-        historial = user.get("historial")
-        if not isinstance(historial, list):
-            historial = []
-
-        for r in registro:
-            r["fecha"] = datetime.now().strftime("%Y-%m-%d")
-            r["tipo"] = "entreno"
-            historial.append(r)
-
-        supabase.table("usuarios").update({
-            "historial": historial
-        }).eq("id", user["id"]).execute()
-
-        st.success("🔥 Entreno guardado")
+    for ej, (series, reps) in ejercicios.items():
+        st.write(f"**{ej}** → {series} series | {reps} reps")
 
 # -------- HISTORIAL --------
 elif menu == "📅 Historial":
-
-    st.header("📅 Historial")
 
     historial = user.get("historial")
 
     if historial:
         df = pd.DataFrame(historial)
         st.dataframe(df)
-    else:
-        st.info("Sin datos")
 
 # -------- PROGRESO --------
 elif menu == "📊 Progreso":
-
-    st.header("📊 Progreso")
 
     historial = user.get("historial")
 
@@ -163,76 +117,11 @@ elif menu == "📊 Progreso":
 
         if not df.empty:
             ejercicio = st.selectbox("Ejercicio", df["ejercicio"].unique())
-            df_f = df[df["ejercicio"] == ejercicio]
+            st.line_chart(df[df["ejercicio"] == ejercicio]["peso"])
 
-            st.line_chart(df_f["peso"])
-        else:
-            st.info("Sin entrenos")
-
-# -------- DIETA (FIX TOTAL) --------
+# -------- DIETA --------
 elif menu == "🍽️ Dieta":
 
-    st.header("🍽️ Dieta diaria")
+    st.header("🍽️ Dieta")
 
-    dieta = {
-        "Desayuno": {
-            "Tostada jamón": 500,
-            "Huevos + guacamole": 500,
-            "Tortitas avena": 500,
-            "Leche + cereales": 500
-        },
-        "Comida": {
-            "Patata + atún": 850,
-            "Arroz + pollo": 850,
-            "Pasta + carne": 850,
-            "Macarrones + salmón": 850
-        },
-        "Cena": {
-            "Pasta + pollo": 800,
-            "Merluza + patata": 800,
-            "Arroz + atún": 800,
-            "Pavo + quinoa": 800
-        }
-    }
-
-    total_calorias = 0
-    seleccion = {}
-
-    for comida, opciones in dieta.items():
-        st.subheader(comida)
-
-        opcion = st.selectbox(comida, list(opciones.keys()), key=comida)
-        calorias = int(opciones[opcion])
-
-        st.write(f"🔥 {calorias} kcal")
-
-        seleccion[comida] = {
-            "opcion": opcion,
-            "calorias": calorias
-        }
-
-        total_calorias += calorias
-
-    st.markdown("---")
-    st.success(f"🔥 TOTAL: {total_calorias} kcal")
-
-    if st.button("💾 Guardar dieta"):
-
-        historial = user.get("historial")
-        if not isinstance(historial, list):
-            historial = []
-
-        registro_dieta = {
-            "fecha": datetime.now().strftime("%Y-%m-%d"),
-            "tipo": "dieta",
-            "comidas": seleccion,
-            "total_kcal": int(total_calorias)
-        }
-
-        historial.append(registro_dieta)
-
-        supabase.table("usuarios").update({
-            "historial": historial
-        }).eq("id", user["id"]).execute()
-
-        st.success("✅ Dieta guardada PERFECTA")
+    st.write("Plan diario personalizado")
