@@ -9,7 +9,7 @@ st.set_page_config(page_title="APOLLO", layout="centered")
 
 FILE = "data.json"
 
-# -------- CREAR ARCHIVO SI NO EXISTE --------
+# -------- CREAR ARCHIVO --------
 if not os.path.exists(FILE):
     with open(FILE, "w") as f:
         json.dump({"entrenos": [], "dietas": [], "pesos": []}, f)
@@ -89,7 +89,6 @@ if menu == "🏋️":
         st.session_state.timer -= 1
         st.rerun()
 
-    # GUARDAR BIEN (FIX PROGRESO)
     if st.button("💾 Guardar entreno"):
 
         data["entrenos"].append({
@@ -165,6 +164,10 @@ elif menu == "📊":
         registros = []
 
         for entreno in data["entrenos"]:
+
+            if "ejercicios" not in entreno:
+                continue  # 🔥 ignora datos antiguos
+
             fecha = entreno["fecha"]
 
             for ej in entreno["ejercicios"]:
@@ -174,13 +177,18 @@ elif menu == "📊":
                     "peso": ej["peso"]
                 })
 
-        df = pd.DataFrame(registros)
+        if registros:
 
-        ejercicio = st.selectbox("Ejercicio", df["ejercicio"].unique())
+            df = pd.DataFrame(registros)
 
-        df_filtrado = df[df["ejercicio"] == ejercicio]
+            ejercicio = st.selectbox("Ejercicio", df["ejercicio"].unique())
 
-        st.line_chart(df_filtrado.set_index("fecha")["peso"])
+            df_filtrado = df[df["ejercicio"] == ejercicio]
+
+            st.line_chart(df_filtrado.set_index("fecha")["peso"])
+
+        else:
+            st.info("No hay datos válidos aún")
 
     else:
         st.info("No hay datos aún")
