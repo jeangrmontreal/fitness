@@ -1,0 +1,21 @@
+{
+  "name": "APOLLO",
+  "short_name": "APOLLO",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c0f0a",
+  "theme_color": "#556b2f",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "static/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "static/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
