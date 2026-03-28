@@ -74,13 +74,14 @@ if menu == "🏋️":
         peso = st.number_input("Kg", 0.0, step=2.5, key=f"p{i}")
 
         if st.button("⏱️", key=f"t{i}"):
-            st.session_state.timer = 30
+            st.session_state.timer = 60  # 🔥 ahora 60s
 
         registro.append({
             "ejercicio": ej,
             "peso": peso
         })
 
+    # TIMER
     if st.session_state.timer > 0:
         timer.markdown(f"## ⏳ {st.session_state.timer}s")
         time.sleep(1)
@@ -88,11 +89,14 @@ if menu == "🏋️":
         st.rerun()
 
     if st.button("💾 Guardar entreno"):
-        data["entrenos"].append({
-            "fecha": datetime.now().strftime("%Y-%m-%d"),
-            "dia": dia,
-            "data": registro
-        })
+
+        for r in registro:
+            data["entrenos"].append({
+                "fecha": datetime.now().strftime("%Y-%m-%d"),
+                "dia": dia,
+                "ejercicio": r["ejercicio"],
+                "peso": r["peso"]
+            })
 
         with open(FILE, "w") as f:
             json.dump(data, f)
@@ -106,47 +110,43 @@ elif menu == "🍽️":
 
     dieta = {
         "Desayuno": [
-            ("Tostada + jamón + fruta", "Pan 100g, jamón 50g...", 500),
-            ("Huevos + guacamole", "Huevo 100g, guacamole 20g...", 500),
-            ("Tortitas avena", "Avena 50g, huevo, plátano...", 500),
-            ("Leche + cereales", "Leche 300g, corn flakes...", 500),
+            ("Tostada + jamón + fruta", 500),
+            ("Huevos + guacamole", 500),
+            ("Tortitas avena", 500),
+            ("Leche + cereales", 500),
         ],
         "Comida": [
-            ("Patata + atún", "Patata 300g, atún...", 850),
-            ("Arroz + pollo", "Arroz 85g, pollo 150g...", 850),
-            ("Pasta + carne", "Espaguetis 100g...", 850),
-            ("Macarrones + salmón", "Salmón 220g...", 850),
+            ("Patata + atún", 850),
+            ("Arroz + pollo", 850),
+            ("Pasta + carne", 850),
+            ("Macarrones + salmón", 850),
         ],
         "Cena": [
-            ("Pasta + pollo", "Macarrones 120g...", 800),
-            ("Merluza + patata", "Patata 300g...", 800),
-            ("Arroz + atún", "Arroz 120g...", 800),
-            ("Pavo + quinoa", "Quinoa 120g...", 800),
+            ("Pasta + pollo", 800),
+            ("Merluza + patata", 800),
+            ("Arroz + atún", 800),
+            ("Pavo + quinoa", 800),
         ]
     }
 
     total = 0
-    seleccion = {}
 
     for comida, opciones in dieta.items():
 
         nombres = [o[0] for o in opciones]
         opcion = st.selectbox(comida, nombres)
 
-        detalle = next(o for o in opciones if o[0] == opcion)
+        kcal = next(o[1] for o in opciones if o[0] == opcion)
 
-        st.caption(detalle[1])
-        st.write(f"{detalle[2]} kcal")
-
-        seleccion[comida] = opcion
-        total += detalle[2]
+        st.write(f"{kcal} kcal")
+        total += kcal
 
     st.success(f"🔥 TOTAL: {total} kcal")
 
     if st.button("💾 Guardar dieta"):
+
         data["dietas"].append({
             "fecha": datetime.now().strftime("%Y-%m-%d"),
-            "data": seleccion,
             "kcal": total
         })
 
@@ -158,17 +158,17 @@ elif menu == "🍽️":
 # ---------------- PROGRESO ----------------
 elif menu == "📊":
 
-    peso = st.number_input("Peso")
+    st.subheader("Progreso")
 
-    if st.button("Guardar peso"):
-        data["pesos"].append({
-            "fecha": datetime.now().strftime("%Y-%m-%d"),
-            "peso": peso
-        })
+    if data["entrenos"]:
 
-        with open(FILE, "w") as f:
-            json.dump(data, f)
+        df = pd.DataFrame(data["entrenos"])
 
-    if data["pesos"]:
-        df = pd.DataFrame(data["pesos"])
-        st.line_chart(df["peso"])
+        ejercicio = st.selectbox("Ejercicio", df["ejercicio"].unique())
+
+        df_filtrado = df[df["ejercicio"] == ejercicio]
+
+        st.line_chart(df_filtrado["peso"])
+
+    else:
+        st.info("No hay datos aún")
