@@ -7,13 +7,11 @@ import os
 
 st.set_page_config(page_title="APOLLO", layout="centered")
 
-# -------- ESTILO OLIVA PREMIUM --------
+# -------- ESTILO OLIVA --------
 st.markdown("""
 <style>
 body {background-color: #0c0f0a; color: #e5e7eb;}
-
 h1, h2, h3 {color: #d1d5db;}
-
 .stButton>button {
     width: 100%;
     border-radius: 18px;
@@ -24,35 +22,11 @@ h1, h2, h3 {color: #d1d5db;}
     color: white;
     border: none;
 }
-
-.stButton>button:hover {
-    background: linear-gradient(135deg, #6b8e23, #556b2f);
-}
-
 .stNumberInput input {
     border-radius: 12px;
     background-color: #1a1f14;
     color: white;
-    border: 1px solid #556b2f;
 }
-
-div[data-baseweb="select"] {
-    background-color: #1a1f14;
-    border-radius: 12px;
-    border: 1px solid #556b2f;
-}
-
-hr {
-    border: 0;
-    height: 1px;
-    background: #2f3e1f;
-}
-
-.block-container {
-    padding-top: 1rem;
-}
-
-p, span {color: #cbd5e1;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -61,19 +35,34 @@ FILE = "data.json"
 # -------- CREAR ARCHIVO --------
 if not os.path.exists(FILE):
     with open(FILE, "w") as f:
-        json.dump({"entrenos": [], "dietas": [], "pesos": []}, f)
+        json.dump({
+            "entrenos": [],
+            "dietas": [],
+            "pesos": [],
+            "rutina_custom": [],
+            "dieta_custom": ""
+        }, f)
 
 with open(FILE, "r") as f:
     data = json.load(f)
 
 st.markdown("# 💪 APOLLO")
 
-menu = st.radio("", ["🏋️", "🍽️", "📊"], horizontal=True)
+menu = st.radio("", ["🏋️", "🍽️", "📊", "⚙️"], horizontal=True)
 
 # ---------------- ENTRENAMIENTO ----------------
 if menu == "🏋️":
 
     st.markdown("### 🏋️ Entreno")
+
+    # 👉 SI HAY RUTINA PERSONALIZADA
+    if data.get("rutina_custom"):
+        st.info("Rutina personalizada")
+
+        for linea in data["rutina_custom"]:
+            st.write(f"• {linea}")
+
+        st.stop()
 
     dia = st.selectbox("Día", ["Día 1", "Día 2", "Día 3", "Día 4"])
 
@@ -155,12 +144,18 @@ if menu == "🏋️":
         with open(FILE, "w") as f:
             json.dump(data, f)
 
-        st.success("🔥 Entreno guardado")
+        st.success("Entreno guardado 🔥")
 
 # ---------------- DIETA ----------------
 elif menu == "🍽️":
 
     st.markdown("### 🍽️ Dieta")
+
+    # 👉 SI HAY DIETA PERSONALIZADA
+    if data.get("dieta_custom"):
+        st.info("Dieta personalizada")
+        st.write(data["dieta_custom"])
+        st.stop()
 
     dieta = {
         "Desayuno": [
@@ -230,7 +225,6 @@ elif menu == "📊":
 
     st.markdown("### 📊 Progreso")
 
-    # PESO
     st.markdown("#### ⚖️ Peso corporal")
 
     peso = st.number_input("Peso actual")
@@ -250,7 +244,6 @@ elif menu == "📊":
 
     st.markdown("---")
 
-    # GYM
     st.markdown("#### 🏋️ Progreso gym")
 
     registros = []
@@ -277,17 +270,14 @@ elif menu == "📊":
 
     st.markdown("---")
 
-    # DIETA HISTORIAL
     st.markdown("#### 🍽️ Historial dieta")
 
     if data["dietas"]:
 
         df_dieta = pd.DataFrame(data["dietas"])
-
         st.line_chart(df_dieta.set_index("fecha")["kcal"])
 
         for d in reversed(data["dietas"]):
-
             st.markdown(f"**📅 {d['fecha']}**")
             st.write(f"🔥 {d['kcal']} kcal")
 
@@ -296,3 +286,22 @@ elif menu == "📊":
                     st.write(f"- {comida}: {opcion}")
 
             st.markdown("---")
+
+# ---------------- CONFIG ----------------
+elif menu == "⚙️":
+
+    st.markdown("### ⚙️ Personalización")
+
+    rutina_text = st.text_area("Tu rutina (una por línea)")
+    if st.button("Guardar rutina"):
+        data["rutina_custom"] = rutina_text.split("\n")
+        with open(FILE, "w") as f:
+            json.dump(data, f)
+        st.success("Rutina guardada")
+
+    dieta_text = st.text_area("Tu dieta")
+    if st.button("Guardar dieta personalizada"):
+        data["dieta_custom"] = dieta_text
+        with open(FILE, "w") as f:
+            json.dump(data, f)
+        st.success("Dieta guardada")
