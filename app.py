@@ -55,13 +55,10 @@ if menu == "🏋️":
 
     st.markdown("### 🏋️ Entreno")
 
-    # 👉 SI HAY RUTINA PERSONALIZADA
     if data.get("rutina_custom"):
         st.info("Rutina personalizada")
-
         for linea in data["rutina_custom"]:
             st.write(f"• {linea}")
-
         st.stop()
 
     dia = st.selectbox("Día", ["Día 1", "Día 2", "Día 3", "Día 4"])
@@ -134,16 +131,13 @@ if menu == "🏋️":
         st.rerun()
 
     if st.button("💾 Guardar entreno"):
-
         data["entrenos"].append({
             "fecha": datetime.now().strftime("%Y-%m-%d"),
             "dia": dia,
             "ejercicios": registro
         })
-
         with open(FILE, "w") as f:
             json.dump(data, f)
-
         st.success("Entreno guardado 🔥")
 
 # ---------------- DIETA ----------------
@@ -151,7 +145,6 @@ elif menu == "🍽️":
 
     st.markdown("### 🍽️ Dieta")
 
-    # 👉 SI HAY DIETA PERSONALIZADA
     if data.get("dieta_custom"):
         st.info("Dieta personalizada")
         st.write(data["dieta_custom"])
@@ -189,7 +182,6 @@ elif menu == "🍽️":
         opcion_elegida = None
 
         for i, (nombre, kcal) in enumerate(opciones):
-
             if cols[i % 2].button(f"{nombre}\n🔥 {kcal} kcal", key=f"{comida}{i}"):
                 opcion_elegida = (nombre, kcal)
 
@@ -199,7 +191,6 @@ elif menu == "🍽️":
         if comida in st.session_state:
             nombre, kcal = st.session_state[comida]
             st.success(f"{nombre} → {kcal} kcal")
-
             seleccion[comida] = nombre
             total += kcal
 
@@ -208,16 +199,13 @@ elif menu == "🍽️":
     st.success(f"🔥 TOTAL: {total} kcal")
 
     if st.button("💾 Guardar dieta"):
-
         data["dietas"].append({
             "fecha": datetime.now().strftime("%Y-%m-%d"),
             "comidas": seleccion,
             "kcal": total
         })
-
         with open(FILE, "w") as f:
             json.dump(data, f)
-
         st.success("Dieta guardada")
 
 # ---------------- PROGRESO ----------------
@@ -234,7 +222,6 @@ elif menu == "📊":
             "fecha": datetime.now().strftime("%Y-%m-%d"),
             "peso": peso
         })
-
         with open(FILE, "w") as f:
             json.dump(data, f)
 
@@ -261,11 +248,8 @@ elif menu == "📊":
 
     if registros:
         df = pd.DataFrame(registros)
-
         ejercicio = st.selectbox("Ejercicio", df["ejercicio"].unique())
-
         df_filtrado = df[df["ejercicio"] == ejercicio]
-
         st.line_chart(df_filtrado.set_index("fecha")["peso"])
 
     st.markdown("---")
@@ -273,18 +257,15 @@ elif menu == "📊":
     st.markdown("#### 🍽️ Historial dieta")
 
     if data["dietas"]:
-
         df_dieta = pd.DataFrame(data["dietas"])
         st.line_chart(df_dieta.set_index("fecha")["kcal"])
 
         for d in reversed(data["dietas"]):
             st.markdown(f"**📅 {d['fecha']}**")
             st.write(f"🔥 {d['kcal']} kcal")
-
             if "comidas" in d:
                 for comida, opcion in d["comidas"].items():
                     st.write(f"- {comida}: {opcion}")
-
             st.markdown("---")
 
 # ---------------- CONFIG ----------------
@@ -292,15 +273,23 @@ elif menu == "⚙️":
 
     st.markdown("### ⚙️ Personalización")
 
-    rutina_text = st.text_area("Tu rutina (una por línea)")
-    if st.button("Guardar rutina"):
+    rutina_actual = "\n".join(data.get("rutina_custom", []))
+
+    rutina_text = st.text_area("Tu rutina", value=rutina_actual)
+
+    if st.button("💾 Guardar rutina"):
         data["rutina_custom"] = rutina_text.split("\n")
         with open(FILE, "w") as f:
             json.dump(data, f)
         st.success("Rutina guardada")
 
-    dieta_text = st.text_area("Tu dieta")
-    if st.button("Guardar dieta personalizada"):
+    st.markdown("---")
+
+    dieta_actual = data.get("dieta_custom", "")
+
+    dieta_text = st.text_area("Tu dieta", value=dieta_actual)
+
+    if st.button("💾 Guardar dieta personalizada"):
         data["dieta_custom"] = dieta_text
         with open(FILE, "w") as f:
             json.dump(data, f)
