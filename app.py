@@ -197,7 +197,6 @@ elif menu == "📊":
 
     st.markdown("### 📊 Progreso")
 
-    # PESO
     peso = st.number_input("Peso actual")
 
     if st.button("Guardar peso"):
@@ -214,7 +213,6 @@ elif menu == "📊":
 
     st.markdown("---")
 
-    # HISTORIAL DIETA
     st.markdown("### 🍽️ Historial dieta")
 
     if data["dietas"]:
@@ -224,6 +222,9 @@ elif menu == "📊":
         for d in reversed(data["dietas"]):
             st.markdown(f"**📅 {d['fecha']}**")
             st.write(f"🔥 {d['kcal']} kcal")
-            for comida, opcion in d["comidas"].items():
-                st.write(f"- {comida}: {opcion}")
+
+            if d.get("comidas"):
+                for comida, opcion in d["comidas"].items():
+                    st.write(f"- {comida}: {opcion}")
+
             st.markdown("---")
