@@ -183,14 +183,22 @@ elif menu == "🍽️":
     st.success(f"🔥 TOTAL: {total} kcal")
 
     if st.button("💾 Guardar dieta"):
+
+        hoy = datetime.now().strftime("%Y-%m-%d")
+
+        # eliminar duplicado del mismo día
+        data["dietas"] = [d for d in data["dietas"] if d["fecha"] != hoy]
+
         data["dietas"].append({
-            "fecha": datetime.now().strftime("%Y-%m-%d"),
+            "fecha": hoy,
             "comidas": seleccion,
             "kcal": total
         })
+
         with open(FILE, "w") as f:
             json.dump(data, f)
-        st.success("Dieta guardada")
+
+        st.success("Dieta guardada 🔥")
 
 # ---------------- PROGRESO ----------------
 elif menu == "📊":
