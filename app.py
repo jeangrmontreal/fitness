@@ -7,9 +7,27 @@ import os
 
 st.set_page_config(page_title="APOLLO", layout="centered")
 
+# -------- ESTILO PREMIUM --------
+st.markdown("""
+<style>
+body {
+    background-color: #0e1117;
+    color: white;
+}
+.stButton>button {
+    width: 100%;
+    border-radius: 12px;
+    height: 45px;
+    font-size: 16px;
+}
+.stNumberInput input {
+    border-radius: 10px;
+}
+</style>
+""", unsafe_allow_html=True)
+
 FILE = "data.json"
 
-# -------- CREAR ARCHIVO --------
 if not os.path.exists(FILE):
     with open(FILE, "w") as f:
         json.dump({"entrenos": [], "dietas": [], "pesos": []}, f)
@@ -17,12 +35,14 @@ if not os.path.exists(FILE):
 with open(FILE, "r") as f:
     data = json.load(f)
 
-st.markdown("## 💪 APOLLO")
+st.markdown("# 💪 APOLLO")
 
-menu = st.radio("", ["🏋️ Entreno", "🍽️ Dieta", "📊 Progreso"], horizontal=True)
+menu = st.radio("", ["🏋️", "🍽️", "📊"], horizontal=True)
 
 # ---------------- ENTRENAMIENTO ----------------
-if menu == "🏋️ Entreno":
+if menu == "🏋️":
+
+    st.markdown("### 🏋️ Entreno")
 
     dia = st.selectbox("Día", ["Día 1", "Día 2", "Día 3", "Día 4"])
 
@@ -70,17 +90,22 @@ if menu == "🏋️ Entreno":
 
     for i, (ej, info) in enumerate(rutina[dia]):
 
-        st.markdown(f"**{ej} ({info})**")
+        st.markdown(f"**{ej}**  \n_{info}_")
 
-        peso = st.number_input("Kg", 0.0, step=2.5, key=f"p{i}")
+        col1, col2 = st.columns([2,1])
 
-        if st.button("⏱️", key=f"t{i}"):
-            st.session_state.timer = 60
+        with col1:
+            peso = st.number_input("Peso (kg)", 0.0, step=2.5, key=f"p{i}")
+        with col2:
+            if st.button("⏱️", key=f"t{i}"):
+                st.session_state.timer = 60
 
         registro.append({
             "ejercicio": ej,
             "peso": peso
         })
+
+        st.markdown("---")
 
     if st.session_state.timer > 0:
         timer.markdown(f"## ⏳ {st.session_state.timer}s")
@@ -99,47 +124,44 @@ if menu == "🏋️ Entreno":
         with open(FILE, "w") as f:
             json.dump(data, f)
 
-        st.success("Entreno guardado 🔥")
+        st.success("🔥 Entreno guardado")
 
 # ---------------- DIETA ----------------
-elif menu == "🍽️ Dieta":
+elif menu == "🍽️":
 
-    st.subheader("🍽️ Dieta (2150 kcal)")
+    st.markdown("### 🍽️ Dieta")
 
     dieta = {
         "Desayuno": [
-            ("Tostada de pan integral, jamón serrano, tomate y aceite + fruta", 500),
-            ("Pan integral + huevos revueltos + guacamole + fruta", 500),
-            ("Tortitas de avena con chocolate y fresas", 500),
-            ("Leche con corn flakes + cacao + fruta", 500),
+            ("Tostada + jamón + fruta", 500),
+            ("Huevos + guacamole", 500),
+            ("Tortitas avena", 500),
+            ("Leche + cereales", 500),
         ],
         "Comida": [
-            ("Patata + atún + huevo + pimiento", 850),
-            ("Arroz + pollo + champiñones", 850),
-            ("Espaguetis + carne + tomate", 850),
-            ("Macarrones + salmón + verduras", 850),
+            ("Patata + atún", 850),
+            ("Arroz + pollo", 850),
+            ("Pasta + carne", 850),
+            ("Macarrones + salmón", 850),
         ],
         "Cena": [
-            ("Pasta + pollo + verduras", 800),
-            ("Merluza + puré de patatas", 800),
-            ("Arroz + atún + verduras", 800),
-            ("Pavo + quinoa + judías", 800),
+            ("Pasta + pollo", 800),
+            ("Merluza + patata", 800),
+            ("Arroz + atún", 800),
+            ("Pavo + quinoa", 800),
         ]
     }
 
     total = 0
-    seleccion = {}
 
     for comida, opciones in dieta.items():
 
-        nombres = [o[0] for o in opciones]
-        opcion = st.selectbox(comida, nombres, key=comida)
+        st.markdown(f"**{comida}**")
 
+        opcion = st.selectbox("", [o[0] for o in opciones], key=comida)
         kcal = next(o[1] for o in opciones if o[0] == opcion)
 
-        st.write(f"🔥 {kcal} kcal")
-
-        seleccion[comida] = opcion
+        st.caption(f"{kcal} kcal")
         total += kcal
 
     st.markdown("---")
@@ -149,24 +171,23 @@ elif menu == "🍽️ Dieta":
 
         data["dietas"].append({
             "fecha": datetime.now().strftime("%Y-%m-%d"),
-            "comidas": seleccion,
             "kcal": total
         })
 
         with open(FILE, "w") as f:
             json.dump(data, f)
 
-        st.success("Dieta guardada ✅")
+        st.success("Dieta guardada")
 
 # ---------------- PROGRESO ----------------
-elif menu == "📊 Progreso":
+elif menu == "📊":
 
-    st.subheader("📊 Progreso")
+    st.markdown("### 📊 Progreso")
 
-    # -------- PESO CORPORAL --------
-    st.markdown("### ⚖️ Peso corporal")
+    # Peso corporal
+    st.markdown("#### ⚖️ Peso")
 
-    peso = st.number_input("Tu peso")
+    peso = st.number_input("Peso actual")
 
     if st.button("Guardar peso"):
         data["pesos"].append({
@@ -183,13 +204,12 @@ elif menu == "📊 Progreso":
 
     st.markdown("---")
 
-    # -------- PROGRESO EJERCICIOS --------
-    st.markdown("### 🏋️ Progreso ejercicios")
+    # Ejercicios
+    st.markdown("#### 🏋️ Progreso gym")
 
     registros = []
 
     for entreno in data["entrenos"]:
-
         if "ejercicios" not in entreno:
             continue
 
@@ -208,6 +228,3 @@ elif menu == "📊 Progreso":
         df_filtrado = df[df["ejercicio"] == ejercicio]
 
         st.line_chart(df_filtrado.set_index("fecha")["peso"])
-
-    else:
-        st.info("Sin datos aún")
